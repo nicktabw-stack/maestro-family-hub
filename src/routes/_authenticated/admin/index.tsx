@@ -81,6 +81,27 @@ function SyntheseAdmin() {
         </Link>
       </div>
 
+      <nav className="mt-3 grid grid-cols-3 gap-2">
+        <Link
+          to="/admin/maitres"
+          className="rounded-2xl border border-border bg-card px-3 py-3 text-center text-xs font-semibold"
+        >
+          Maîtres
+        </Link>
+        <Link
+          to="/admin/familles"
+          className="rounded-2xl border border-border bg-card px-3 py-3 text-center text-xs font-semibold"
+        >
+          Familles
+        </Link>
+        <Link
+          to="/admin/affectations"
+          className="rounded-2xl border border-border bg-card px-3 py-3 text-center text-xs font-semibold"
+        >
+          Affectations
+        </Link>
+      </nav>
+
       {sansPaiement > 0 ? (
         <p className="mt-3 rounded-2xl bg-warning/15 p-3 text-sm text-warning-foreground">
           {sansPaiement} famille(s) sans paiement enregistré pour le mois en cours.

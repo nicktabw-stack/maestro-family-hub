@@ -17,6 +17,8 @@ import { Route as AuthenticatedEspaceRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedFamilleRouteImport } from './routes/_authenticated/famille'
 import { Route as AuthenticatedMaitreRouteImport } from './routes/_authenticated/maitre'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as AuthenticatedAdminAffectationsRouteImport } from './routes/_authenticated/admin/affectations'
+import { Route as AuthenticatedAdminFamillesRouteImport } from './routes/_authenticated/admin/familles'
 import { Route as AuthenticatedAdminMaitresRouteImport } from './routes/_authenticated/admin/maitres'
 
 const IndexRoute = IndexRouteImport.update({
@@ -58,6 +60,18 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/admin/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminAffectationsRoute =
+  AuthenticatedAdminAffectationsRouteImport.update({
+    id: '/admin/affectations',
+    path: '/admin/affectations',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminFamillesRoute =
+  AuthenticatedAdminFamillesRouteImport.update({
+    id: '/admin/familles',
+    path: '/admin/familles',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminMaitresRoute =
   AuthenticatedAdminMaitresRouteImport.update({
     id: '/admin/maitres',
@@ -72,6 +86,8 @@ export interface FileRoutesByFullPath {
   '/espace': typeof AuthenticatedEspaceRoute
   '/famille': typeof AuthenticatedFamilleRoute
   '/maitre': typeof AuthenticatedMaitreRoute
+  '/admin/affectations': typeof AuthenticatedAdminAffectationsRoute
+  '/admin/familles': typeof AuthenticatedAdminFamillesRoute
   '/admin/maitres': typeof AuthenticatedAdminMaitresRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
 }
@@ -82,6 +98,8 @@ export interface FileRoutesByTo {
   '/espace': typeof AuthenticatedEspaceRoute
   '/famille': typeof AuthenticatedFamilleRoute
   '/maitre': typeof AuthenticatedMaitreRoute
+  '/admin/affectations': typeof AuthenticatedAdminAffectationsRoute
+  '/admin/familles': typeof AuthenticatedAdminFamillesRoute
   '/admin/maitres': typeof AuthenticatedAdminMaitresRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
 }
@@ -94,6 +112,8 @@ export interface FileRoutesById {
   '/_authenticated/espace': typeof AuthenticatedEspaceRoute
   '/_authenticated/famille': typeof AuthenticatedFamilleRoute
   '/_authenticated/maitre': typeof AuthenticatedMaitreRoute
+  '/_authenticated/admin/affectations': typeof AuthenticatedAdminAffectationsRoute
+  '/_authenticated/admin/familles': typeof AuthenticatedAdminFamillesRoute
   '/_authenticated/admin/maitres': typeof AuthenticatedAdminMaitresRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
@@ -106,6 +126,8 @@ export interface FileRouteTypes {
     | '/espace'
     | '/famille'
     | '/maitre'
+    | '/admin/affectations'
+    | '/admin/familles'
     | '/admin/maitres'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
@@ -116,6 +138,8 @@ export interface FileRouteTypes {
     | '/espace'
     | '/famille'
     | '/maitre'
+    | '/admin/affectations'
+    | '/admin/familles'
     | '/admin/maitres'
     | '/admin'
   id:
@@ -127,6 +151,8 @@ export interface FileRouteTypes {
     | '/_authenticated/espace'
     | '/_authenticated/famille'
     | '/_authenticated/maitre'
+    | '/_authenticated/admin/affectations'
+    | '/_authenticated/admin/familles'
     | '/_authenticated/admin/maitres'
     | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
@@ -196,6 +222,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/affectations': {
+      id: '/_authenticated/admin/affectations'
+      path: '/admin/affectations'
+      fullPath: '/admin/affectations'
+      preLoaderRoute: typeof AuthenticatedAdminAffectationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/familles': {
+      id: '/_authenticated/admin/familles'
+      path: '/admin/familles'
+      fullPath: '/admin/familles'
+      preLoaderRoute: typeof AuthenticatedAdminFamillesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/maitres': {
       id: '/_authenticated/admin/maitres'
       path: '/admin/maitres'
@@ -210,6 +250,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEspaceRoute: typeof AuthenticatedEspaceRoute
   AuthenticatedFamilleRoute: typeof AuthenticatedFamilleRoute
   AuthenticatedMaitreRoute: typeof AuthenticatedMaitreRoute
+  AuthenticatedAdminAffectationsRoute: typeof AuthenticatedAdminAffectationsRoute
+  AuthenticatedAdminFamillesRoute: typeof AuthenticatedAdminFamillesRoute
   AuthenticatedAdminMaitresRoute: typeof AuthenticatedAdminMaitresRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
@@ -218,6 +260,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEspaceRoute: AuthenticatedEspaceRoute,
   AuthenticatedFamilleRoute: AuthenticatedFamilleRoute,
   AuthenticatedMaitreRoute: AuthenticatedMaitreRoute,
+  AuthenticatedAdminAffectationsRoute: AuthenticatedAdminAffectationsRoute,
+  AuthenticatedAdminFamillesRoute: AuthenticatedAdminFamillesRoute,
   AuthenticatedAdminMaitresRoute: AuthenticatedAdminMaitresRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }

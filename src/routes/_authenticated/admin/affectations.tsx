@@ -106,7 +106,7 @@ function AdminAffectations() {
   });
 
   const cloturer = useMutation({
-    mutationFn: async ({ id, motif }: { id: string; motif?: string }) => {
+    mutationFn: async ({ id, motif }: { id: string; motif?: string | undefined }) => {
       const { error } = await supabase
         .from("affectations")
         .update({

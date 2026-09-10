@@ -251,14 +251,14 @@ function AdminMaitres() {
                 Fermer
               </button>
             </div>
-            <div className="min-h-0 flex-1 overflow-auto bg-secondary">
+            <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-secondary">
               {!apercu.url ? (
                 <p className="p-6 text-center text-sm text-muted-foreground">Chargement…</p>
               ) : apercu.estImage ? (
                 <img
                   src={apercu.url}
                   alt={apercu.titre}
-                  className="mx-auto h-auto max-w-full object-contain"
+                  className="mx-auto block h-auto w-full max-w-full object-contain"
                 />
               ) : (
                 <iframe

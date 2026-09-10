@@ -34,6 +34,57 @@ const champ =
   "h-12 w-full rounded-xl border border-input bg-card px-3 text-base outline-none focus:border-primary";
 const label = "text-sm font-semibold";
 
+function ChampFichier({
+  id,
+  libelle,
+  obligatoire = false,
+  fichier,
+  onFichier,
+}: {
+  id: string;
+  libelle: string;
+  obligatoire?: boolean;
+  fichier: File | null;
+  onFichier: (f: File | null) => void;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-semibold">{libelle}</span>
+        <span
+          className={cn(
+            "rounded-full px-2 py-0.5 text-[11px] font-semibold",
+            obligatoire ? "bg-destructive/10 text-destructive" : "bg-secondary text-muted-foreground",
+          )}
+        >
+          {obligatoire ? "Obligatoire" : "Optionnel"}
+        </span>
+      </div>
+      <input
+        id={id}
+        type="file"
+        accept="image/*,application/pdf"
+        required={obligatoire && !fichier}
+        className="sr-only"
+        onChange={(e) => onFichier(e.target.files?.[0] ?? null)}
+      />
+      <label
+        htmlFor={id}
+        className="flex h-12 w-full cursor-pointer items-center gap-2 rounded-xl border border-input bg-card px-3 text-sm font-semibold text-primary"
+      >
+        <Upload className="h-4 w-4 shrink-0" aria-hidden />
+        <span>{fichier ? "Changer le fichier" : "Choisir un fichier"}</span>
+      </label>
+      {fichier ? (
+        <p className="flex items-center gap-1.5 text-xs font-medium text-success">
+          <Check className="h-4 w-4 shrink-0" aria-hidden />
+          <span className="truncate">{fichier.name}</span>
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function PageAuth() {
   const { mode: modeInitial } = Route.useSearch();
   const [mode, setMode] = useState<Mode>(modeInitial);

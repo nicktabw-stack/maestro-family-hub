@@ -255,9 +255,17 @@ function AdminMaitres() {
               {!apercu.url ? (
                 <p className="p-6 text-center text-sm text-muted-foreground">Chargement…</p>
               ) : apercu.estImage ? (
-                <img src={apercu.url} alt={apercu.titre} className="mx-auto h-auto w-full" />
+                <img
+                  src={apercu.url}
+                  alt={apercu.titre}
+                  className="mx-auto h-auto max-w-full object-contain"
+                />
               ) : (
-                <iframe src={apercu.url} title={apercu.titre} className="h-full w-full" />
+                <iframe
+                  src={`${apercu.url}#view=FitH`}
+                  title={apercu.titre}
+                  className="h-full w-full"
+                />
               )}
             </div>
           </div>

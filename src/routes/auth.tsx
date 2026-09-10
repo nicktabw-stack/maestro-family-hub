@@ -410,37 +410,26 @@ function FormInscription({ onMode }: { onMode: (m: Mode) => void }) {
             />
           </div>
           <div className="rounded-xl border border-dashed border-border bg-card p-4">
-            <p className="text-sm font-semibold">Documents obligatoires</p>
+            <p className="text-sm font-semibold">Vos documents</p>
             <p className="mb-3 text-xs text-muted-foreground">
               Ils restent confidentiels : seuls vous et l'administration y avez accès.
             </p>
             <div className="space-y-3">
-              <div className="space-y-1.5">
-                <label className="text-sm font-semibold" htmlFor="cni">
-                  Pièce d'identité (CNI)
-                </label>
-                <input
-                  id="cni"
-                  type="file"
-                  accept="image/*,application/pdf"
-                  required
-                  className="w-full text-sm"
-                  onChange={(e) => setCni(e.target.files?.[0] ?? null)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-sm font-semibold" htmlFor="diplome">
-                  Diplôme
-                </label>
-                <input
-                  id="diplome"
-                  type="file"
-                  accept="image/*,application/pdf"
-                  required
-                  className="w-full text-sm"
-                  onChange={(e) => setDiplome(e.target.files?.[0] ?? null)}
-                />
-              </div>
+              <ChampFichier
+                id="cni"
+                libelle="Pièce d'identité (CNI)"
+                obligatoire
+                fichier={cni}
+                onFichier={setCni}
+              />
+              <ChampFichier
+                id="diplome"
+                libelle="Diplôme"
+                obligatoire
+                fichier={diplome}
+                onFichier={setDiplome}
+              />
+              <ChampFichier id="cv" libelle="CV" fichier={cv} onFichier={setCv} />
             </div>
           </div>
           <p className="rounded-xl bg-warning/15 p-3 text-sm text-warning-foreground">

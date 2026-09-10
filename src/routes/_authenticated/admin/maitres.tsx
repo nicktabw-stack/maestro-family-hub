@@ -76,19 +76,41 @@ function AdminMaitres() {
     onError: () => toast.error("Action impossible"),
   });
 
-  async function ouvrirDocument(chemin: string | null) {
+  async function ouvrirDocument(chemin: string | null, titre: string) {
     if (!chemin) {
       toast.error("Document absent");
       return;
     }
+    setApercu({ titre, url: null, estImage: false });
     const { data, error } = await supabase.storage
       .from("documents-maitres")
       .createSignedUrl(chemin, 300);
     if (error || !data) {
+      setApercu(null);
       toast.error("Document inaccessible");
       return;
     }
-    window.open(data.signedUrl, "_blank", "noopener");
+    try {
+      const reponse = await fetch(data.signedUrl);
+      const blob = await reponse.blob();
+      const extension = chemin.split(".").pop()?.toLowerCase() ?? "";
+      const estImage = ["jpg", "jpeg", "png", "webp", "gif", "heic"].includes(extension);
+      const type = estImage
+        ? `image/${extension === "jpg" ? "jpeg" : extension}`
+        : extension === "pdf"
+          ? "application/pdf"
+          : blob.type || "application/octet-stream";
+      const url = URL.createObjectURL(new Blob([blob], { type }));
+      setApercu({ titre, url, estImage });
+    } catch {
+      setApercu(null);
+      toast.error("Aperçu impossible");
+    }
+  }
+
+  function fermerApercu() {
+    if (apercu?.url) URL.revokeObjectURL(apercu.url);
+    setApercu(null);
   }
 
   if (!pret) return <EcranAttenteAdmin />;

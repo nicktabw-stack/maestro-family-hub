@@ -25,6 +25,11 @@ function AdminMaitres() {
   const queryClient = useQueryClient();
   const [filtre, setFiltre] = useState<(typeof FILTRES)[number]["cle"]>("en_attente");
   const [motifs, setMotifs] = useState<Record<string, string>>({});
+  const [apercu, setApercu] = useState<{
+    titre: string;
+    url: string | null;
+    estImage: boolean;
+  } | null>(null);
 
   const { data: maitres } = useQuery({
     queryKey: ["admin-maitres", filtre],

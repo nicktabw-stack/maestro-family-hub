@@ -177,6 +177,11 @@ function FormConnexion({ onMode }: { onMode: (m: Mode) => void }) {
           onChange={(e) => setMotDePasse(e.target.value)}
         />
       </div>
+      {erreur ? (
+        <p role="alert" className="rounded-xl bg-destructive/10 p-3 text-sm font-medium text-destructive">
+          {erreur}
+        </p>
+      ) : null}
       <button
         type="submit"
         disabled={enCours}

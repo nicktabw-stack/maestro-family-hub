@@ -204,6 +204,7 @@ function FormInscription({ onMode }: { onMode: (m: Mode) => void }) {
   const [niveauEtudes, setNiveauEtudes] = useState("");
   const [cni, setCni] = useState<File | null>(null);
   const [diplome, setDiplome] = useState<File | null>(null);
+  const [cv, setCv] = useState<File | null>(null);
   const [enCours, setEnCours] = useState(false);
 
   async function soumettre(e: React.FormEvent) {

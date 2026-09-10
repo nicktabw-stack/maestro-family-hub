@@ -174,18 +174,25 @@ function AdminMaitres() {
                 </div>
               </dl>
 
-              <div className="mt-3 flex gap-2">
+              <div className="mt-3 grid grid-cols-2 gap-2">
                 <button
-                  onClick={() => ouvrirDocument(m.cni_path)}
-                  className="h-10 flex-1 rounded-xl border border-border text-sm font-semibold"
+                  onClick={() => ouvrirDocument(m.cni_path, "Pièce d'identité (CNI)")}
+                  className="h-10 rounded-xl border border-border text-sm font-semibold"
                 >
                   Voir la CNI
                 </button>
                 <button
-                  onClick={() => ouvrirDocument(m.diplome_path)}
-                  className="h-10 flex-1 rounded-xl border border-border text-sm font-semibold"
+                  onClick={() => ouvrirDocument(m.diplome_path, "Diplôme")}
+                  className="h-10 rounded-xl border border-border text-sm font-semibold"
                 >
                   Voir le diplôme
+                </button>
+                <button
+                  disabled={!m.cv_path}
+                  onClick={() => ouvrirDocument(m.cv_path, "CV")}
+                  className="col-span-2 h-10 rounded-xl border border-border text-sm font-semibold disabled:opacity-50"
+                >
+                  {m.cv_path ? "Voir le CV" : "CV non fourni"}
                 </button>
               </div>
 

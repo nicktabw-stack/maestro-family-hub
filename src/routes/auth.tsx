@@ -252,19 +252,26 @@ function FormInscription({ onMode }: { onMode: (m: Mode) => void }) {
         });
         toast.success("Compte famille créé", { description: "Votre espace est actif." });
       } else {
-        const cheminCni = `${user.id}/cni-${Date.now()}-${cni!.name.replace(/\s+/g, "_")}`;
-        const cheminDiplome = `${user.id}/diplome-${Date.now()}-${diplome!.name.replace(/\s+/g, "_")}`;
-        const up1 = await supabase.storage.from("documents-maitres").upload(cheminCni, cni!);
-        if (up1.error) throw up1.error;
-        const up2 = await supabase.storage
-          .from("documents-maitres")
-          .upload(cheminDiplome, diplome!);
-        if (up2.error) throw up2.error;
+        async function envoyer(fichier: File, prefixe: string) {
+          const chemin = `${user!.id}/${prefixe}-${Date.now()}-${fichier.name.replace(/\s+/g, "_")}`;
+          const { error: erreurUpload } = await supabase.storage
+            .from("documents-maitres")
+            .upload(chemin, fichier, {
+              contentType: fichier.type || "application/octet-stream",
+              upsert: false,
+            });
+          if (erreurUpload) throw erreurUpload;
+          return chemin;
+        }
+        const cheminCni = await envoyer(cni!, "cni");
+        const cheminDiplome = await envoyer(diplome!, "diplome");
+        const cheminCv = cv ? await envoyer(cv, "cv") : null;
         await supabase.from("maitres").insert({
           user_id: user.id,
           statut: "en_attente",
           cni_path: cheminCni,
           diplome_path: cheminDiplome,
+          cv_path: cheminCv,
           specialites: specialites.trim() || null,
           niveau_etudes: niveauEtudes.trim() || null,
           zone: quartier.trim() || null,

@@ -238,6 +238,31 @@ function AdminMaitres() {
           ))
         )}
       </div>
+
+      {apercu ? (
+        <div className="fixed inset-0 z-50 flex flex-col bg-foreground/70 p-3">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl bg-card">
+            <div className="flex items-center justify-between gap-3 border-b border-border p-3">
+              <h2 className="truncate text-sm font-bold">{apercu.titre}</h2>
+              <button
+                onClick={fermerApercu}
+                className="h-9 shrink-0 rounded-xl border border-border px-3 text-sm font-semibold"
+              >
+                Fermer
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-auto bg-secondary">
+              {!apercu.url ? (
+                <p className="p-6 text-center text-sm text-muted-foreground">Chargement…</p>
+              ) : apercu.estImage ? (
+                <img src={apercu.url} alt={apercu.titre} className="mx-auto h-auto w-full" />
+              ) : (
+                <iframe src={apercu.url} title={apercu.titre} className="h-full w-full" />
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </AppShell>
   );
 }

@@ -119,20 +119,34 @@ function FormConnexion({ onMode }: { onMode: (m: Mode) => void }) {
   const [email, setEmail] = useState("");
   const [motDePasse, setMotDePasse] = useState("");
   const [enCours, setEnCours] = useState(false);
+  const [erreur, setErreur] = useState<string | null>(null);
 
   async function soumettre(e: React.FormEvent) {
     e.preventDefault();
+    setErreur(null);
     setEnCours(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password: motDePasse,
-    });
-    setEnCours(false);
-    if (error) {
-      toast.error("Connexion impossible", { description: "E-mail ou mot de passe incorrect." });
-      return;
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: motDePasse,
+      });
+      if (error) {
+        const message =
+          error.message.toLowerCase().includes("email not confirmed")
+            ? "Votre adresse e-mail n'est pas encore confirmée."
+            : "E-mail ou mot de passe incorrect.";
+        setErreur(message);
+        toast.error("Connexion impossible", { description: message });
+        return;
+      }
+      navigate({ to: "/espace", replace: true });
+    } catch {
+      const message = "Connexion impossible pour le moment. Vérifiez votre connexion internet.";
+      setErreur(message);
+      toast.error(message);
+    } finally {
+      setEnCours(false);
     }
-    navigate({ to: "/espace", replace: true });
   }
 
   return (

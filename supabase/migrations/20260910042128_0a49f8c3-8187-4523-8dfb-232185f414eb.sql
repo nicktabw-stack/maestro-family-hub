@@ -1,0 +1,1 @@
+ALTER TABLE public.maitres ADD COLUMN IF NOT EXISTS cv_path text;

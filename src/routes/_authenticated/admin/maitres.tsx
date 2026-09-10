@@ -25,6 +25,11 @@ function AdminMaitres() {
   const queryClient = useQueryClient();
   const [filtre, setFiltre] = useState<(typeof FILTRES)[number]["cle"]>("en_attente");
   const [motifs, setMotifs] = useState<Record<string, string>>({});
+  const [apercu, setApercu] = useState<{
+    titre: string;
+    url: string | null;
+    estImage: boolean;
+  } | null>(null);
 
   const { data: maitres } = useQuery({
     queryKey: ["admin-maitres", filtre],
@@ -76,19 +81,41 @@ function AdminMaitres() {
     onError: () => toast.error("Action impossible"),
   });
 
-  async function ouvrirDocument(chemin: string | null) {
+  async function ouvrirDocument(chemin: string | null, titre: string) {
     if (!chemin) {
       toast.error("Document absent");
       return;
     }
+    setApercu({ titre, url: null, estImage: false });
     const { data, error } = await supabase.storage
       .from("documents-maitres")
       .createSignedUrl(chemin, 300);
     if (error || !data) {
+      setApercu(null);
       toast.error("Document inaccessible");
       return;
     }
-    window.open(data.signedUrl, "_blank", "noopener");
+    try {
+      const reponse = await fetch(data.signedUrl);
+      const blob = await reponse.blob();
+      const extension = chemin.split(".").pop()?.toLowerCase() ?? "";
+      const estImage = ["jpg", "jpeg", "png", "webp", "gif", "heic"].includes(extension);
+      const type = estImage
+        ? `image/${extension === "jpg" ? "jpeg" : extension}`
+        : extension === "pdf"
+          ? "application/pdf"
+          : blob.type || "application/octet-stream";
+      const url = URL.createObjectURL(new Blob([blob], { type }));
+      setApercu({ titre, url, estImage });
+    } catch {
+      setApercu(null);
+      toast.error("Aperçu impossible");
+    }
+  }
+
+  function fermerApercu() {
+    if (apercu?.url) URL.revokeObjectURL(apercu.url);
+    setApercu(null);
   }
 
   if (!pret) return <EcranAttenteAdmin />;
@@ -147,18 +174,25 @@ function AdminMaitres() {
                 </div>
               </dl>
 
-              <div className="mt-3 flex gap-2">
+              <div className="mt-3 grid grid-cols-2 gap-2">
                 <button
-                  onClick={() => ouvrirDocument(m.cni_path)}
-                  className="h-10 flex-1 rounded-xl border border-border text-sm font-semibold"
+                  onClick={() => ouvrirDocument(m.cni_path, "Pièce d'identité (CNI)")}
+                  className="h-10 rounded-xl border border-border text-sm font-semibold"
                 >
                   Voir la CNI
                 </button>
                 <button
-                  onClick={() => ouvrirDocument(m.diplome_path)}
-                  className="h-10 flex-1 rounded-xl border border-border text-sm font-semibold"
+                  onClick={() => ouvrirDocument(m.diplome_path, "Diplôme")}
+                  className="h-10 rounded-xl border border-border text-sm font-semibold"
                 >
                   Voir le diplôme
+                </button>
+                <button
+                  disabled={!m.cv_path}
+                  onClick={() => ouvrirDocument(m.cv_path, "CV")}
+                  className="col-span-2 h-10 rounded-xl border border-border text-sm font-semibold disabled:opacity-50"
+                >
+                  {m.cv_path ? "Voir le CV" : "CV non fourni"}
                 </button>
               </div>
 
@@ -204,6 +238,31 @@ function AdminMaitres() {
           ))
         )}
       </div>
+
+      {apercu ? (
+        <div className="fixed inset-0 z-50 flex flex-col bg-foreground/70 p-3">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl bg-card">
+            <div className="flex items-center justify-between gap-3 border-b border-border p-3">
+              <h2 className="truncate text-sm font-bold">{apercu.titre}</h2>
+              <button
+                onClick={fermerApercu}
+                className="h-9 shrink-0 rounded-xl border border-border px-3 text-sm font-semibold"
+              >
+                Fermer
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-auto bg-secondary">
+              {!apercu.url ? (
+                <p className="p-6 text-center text-sm text-muted-foreground">Chargement…</p>
+              ) : apercu.estImage ? (
+                <img src={apercu.url} alt={apercu.titre} className="mx-auto h-auto w-full" />
+              ) : (
+                <iframe src={apercu.url} title={apercu.titre} className="h-full w-full" />
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </AppShell>
   );
 }

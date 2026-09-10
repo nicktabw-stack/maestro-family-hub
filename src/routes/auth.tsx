@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { Check, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +34,57 @@ export const Route = createFileRoute("/auth")({
 const champ =
   "h-12 w-full rounded-xl border border-input bg-card px-3 text-base outline-none focus:border-primary";
 const label = "text-sm font-semibold";
+
+function ChampFichier({
+  id,
+  libelle,
+  obligatoire = false,
+  fichier,
+  onFichier,
+}: {
+  id: string;
+  libelle: string;
+  obligatoire?: boolean;
+  fichier: File | null;
+  onFichier: (f: File | null) => void;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-semibold">{libelle}</span>
+        <span
+          className={cn(
+            "rounded-full px-2 py-0.5 text-[11px] font-semibold",
+            obligatoire ? "bg-destructive/10 text-destructive" : "bg-secondary text-muted-foreground",
+          )}
+        >
+          {obligatoire ? "Obligatoire" : "Optionnel"}
+        </span>
+      </div>
+      <input
+        id={id}
+        type="file"
+        accept="image/*,application/pdf"
+        required={obligatoire && !fichier}
+        className="sr-only"
+        onChange={(e) => onFichier(e.target.files?.[0] ?? null)}
+      />
+      <label
+        htmlFor={id}
+        className="flex h-12 w-full cursor-pointer items-center gap-2 rounded-xl border border-input bg-card px-3 text-sm font-semibold text-primary"
+      >
+        <Upload className="h-4 w-4 shrink-0" aria-hidden />
+        <span>{fichier ? "Changer le fichier" : "Choisir un fichier"}</span>
+      </label>
+      {fichier ? (
+        <p className="flex items-center gap-1.5 text-xs font-medium text-success">
+          <Check className="h-4 w-4 shrink-0" aria-hidden />
+          <span className="truncate">{fichier.name}</span>
+        </p>
+      ) : null}
+    </div>
+  );
+}
 
 function PageAuth() {
   const { mode: modeInitial } = Route.useSearch();
@@ -67,20 +119,34 @@ function FormConnexion({ onMode }: { onMode: (m: Mode) => void }) {
   const [email, setEmail] = useState("");
   const [motDePasse, setMotDePasse] = useState("");
   const [enCours, setEnCours] = useState(false);
+  const [erreur, setErreur] = useState<string | null>(null);
 
   async function soumettre(e: React.FormEvent) {
     e.preventDefault();
+    setErreur(null);
     setEnCours(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password: motDePasse,
-    });
-    setEnCours(false);
-    if (error) {
-      toast.error("Connexion impossible", { description: "E-mail ou mot de passe incorrect." });
-      return;
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: motDePasse,
+      });
+      if (error) {
+        const message =
+          error.message.toLowerCase().includes("email not confirmed")
+            ? "Votre adresse e-mail n'est pas encore confirmée."
+            : "E-mail ou mot de passe incorrect.";
+        setErreur(message);
+        toast.error("Connexion impossible", { description: message });
+        return;
+      }
+      navigate({ to: "/espace", replace: true });
+    } catch {
+      const message = "Connexion impossible pour le moment. Vérifiez votre connexion internet.";
+      setErreur(message);
+      toast.error(message);
+    } finally {
+      setEnCours(false);
     }
-    navigate({ to: "/espace", replace: true });
   }
 
   return (
@@ -111,6 +177,11 @@ function FormConnexion({ onMode }: { onMode: (m: Mode) => void }) {
           onChange={(e) => setMotDePasse(e.target.value)}
         />
       </div>
+      {erreur ? (
+        <p role="alert" className="rounded-xl bg-destructive/10 p-3 text-sm font-medium text-destructive">
+          {erreur}
+        </p>
+      ) : null}
       <button
         type="submit"
         disabled={enCours}
@@ -204,6 +275,7 @@ function FormInscription({ onMode }: { onMode: (m: Mode) => void }) {
   const [niveauEtudes, setNiveauEtudes] = useState("");
   const [cni, setCni] = useState<File | null>(null);
   const [diplome, setDiplome] = useState<File | null>(null);
+  const [cv, setCv] = useState<File | null>(null);
   const [enCours, setEnCours] = useState(false);
 
   async function soumettre(e: React.FormEvent) {
@@ -251,19 +323,26 @@ function FormInscription({ onMode }: { onMode: (m: Mode) => void }) {
         });
         toast.success("Compte famille créé", { description: "Votre espace est actif." });
       } else {
-        const cheminCni = `${user.id}/cni-${Date.now()}-${cni!.name.replace(/\s+/g, "_")}`;
-        const cheminDiplome = `${user.id}/diplome-${Date.now()}-${diplome!.name.replace(/\s+/g, "_")}`;
-        const up1 = await supabase.storage.from("documents-maitres").upload(cheminCni, cni!);
-        if (up1.error) throw up1.error;
-        const up2 = await supabase.storage
-          .from("documents-maitres")
-          .upload(cheminDiplome, diplome!);
-        if (up2.error) throw up2.error;
+        async function envoyer(fichier: File, prefixe: string) {
+          const chemin = `${user!.id}/${prefixe}-${Date.now()}-${fichier.name.replace(/\s+/g, "_")}`;
+          const { error: erreurUpload } = await supabase.storage
+            .from("documents-maitres")
+            .upload(chemin, fichier, {
+              contentType: fichier.type || "application/octet-stream",
+              upsert: false,
+            });
+          if (erreurUpload) throw erreurUpload;
+          return chemin;
+        }
+        const cheminCni = await envoyer(cni!, "cni");
+        const cheminDiplome = await envoyer(diplome!, "diplome");
+        const cheminCv = cv ? await envoyer(cv, "cv") : null;
         await supabase.from("maitres").insert({
           user_id: user.id,
           statut: "en_attente",
           cni_path: cheminCni,
           diplome_path: cheminDiplome,
+          cv_path: cheminCv,
           specialites: specialites.trim() || null,
           niveau_etudes: niveauEtudes.trim() || null,
           zone: quartier.trim() || null,
@@ -402,37 +481,26 @@ function FormInscription({ onMode }: { onMode: (m: Mode) => void }) {
             />
           </div>
           <div className="rounded-xl border border-dashed border-border bg-card p-4">
-            <p className="text-sm font-semibold">Documents obligatoires</p>
+            <p className="text-sm font-semibold">Vos documents</p>
             <p className="mb-3 text-xs text-muted-foreground">
               Ils restent confidentiels : seuls vous et l'administration y avez accès.
             </p>
             <div className="space-y-3">
-              <div className="space-y-1.5">
-                <label className="text-sm font-semibold" htmlFor="cni">
-                  Pièce d'identité (CNI)
-                </label>
-                <input
-                  id="cni"
-                  type="file"
-                  accept="image/*,application/pdf"
-                  required
-                  className="w-full text-sm"
-                  onChange={(e) => setCni(e.target.files?.[0] ?? null)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-sm font-semibold" htmlFor="diplome">
-                  Diplôme
-                </label>
-                <input
-                  id="diplome"
-                  type="file"
-                  accept="image/*,application/pdf"
-                  required
-                  className="w-full text-sm"
-                  onChange={(e) => setDiplome(e.target.files?.[0] ?? null)}
-                />
-              </div>
+              <ChampFichier
+                id="cni"
+                libelle="Pièce d'identité (CNI)"
+                obligatoire
+                fichier={cni}
+                onFichier={setCni}
+              />
+              <ChampFichier
+                id="diplome"
+                libelle="Diplôme"
+                obligatoire
+                fichier={diplome}
+                onFichier={setDiplome}
+              />
+              <ChampFichier id="cv" libelle="CV" fichier={cv} onFichier={setCv} />
             </div>
           </div>
           <p className="rounded-xl bg-warning/15 p-3 text-sm text-warning-foreground">

@@ -338,6 +338,7 @@ export type Database = {
           bio: string | null
           cni_path: string | null
           created_at: string
+          cv_path: string | null
           diplome_path: string | null
           id: string
           motif_refus: string | null
@@ -354,6 +355,7 @@ export type Database = {
           bio?: string | null
           cni_path?: string | null
           created_at?: string
+          cv_path?: string | null
           diplome_path?: string | null
           id?: string
           motif_refus?: string | null
@@ -370,6 +372,7 @@ export type Database = {
           bio?: string | null
           cni_path?: string | null
           created_at?: string
+          cv_path?: string | null
           diplome_path?: string | null
           id?: string
           motif_refus?: string | null

@@ -115,7 +115,14 @@ function SyntheseAdmin() {
         ) : (
           <ul className="space-y-2">
             {data.alertes.map((a) => (
-              <li key={a.id} className="rounded-2xl border border-border bg-card p-3">
+              <li
+                key={a.id}
+                className={
+                  a.severite === "danger"
+                    ? "rounded-2xl border border-destructive/40 bg-destructive/10 p-3"
+                    : "rounded-2xl border border-border bg-card p-3"
+                }
+              >
                 <p className="text-sm font-semibold">{a.type}</p>
                 <p className="text-sm text-muted-foreground">{a.message}</p>
               </li>

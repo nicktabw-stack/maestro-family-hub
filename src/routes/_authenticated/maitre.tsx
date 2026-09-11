@@ -118,9 +118,7 @@ function EspaceMaitre() {
       const { lat, lng } = await positionActuelle();
       const { error } = await supabase.rpc("demarrer_cours", {
         _enfant_id: enfantId,
-        _lat: lat,
-        _lng: lng,
-        _matiere: null,
+        ...(lat !== null && lng !== null ? { _lat: lat, _lng: lng } : {}),
       });
       if (error) throw error;
       return lat === null;

@@ -519,6 +519,15 @@ export type Database = {
     Functions: {
       claim_admin_role: { Args: never; Returns: boolean }
       current_maitre_id: { Args: never; Returns: string }
+      demarrer_cours: {
+        Args: {
+          _enfant_id: string
+          _lat: number
+          _lng: number
+          _matiere?: string
+        }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -528,6 +537,17 @@ export type Database = {
       }
       is_famille_owner: { Args: { _famille_id: string }; Returns: boolean }
       maitre_suit_enfant: { Args: { _enfant_id: string }; Returns: boolean }
+      saisir_cours_manuel: {
+        Args: {
+          _date: string
+          _debut: string
+          _enfant_id: string
+          _fin: string
+          _matiere?: string
+        }
+        Returns: string
+      }
+      terminer_cours: { Args: { _cours_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "maitre" | "famille"

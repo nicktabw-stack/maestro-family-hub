@@ -289,3 +289,73 @@ function FormulaireEnfant({
     </div>
   );
 }
+
+function FormulaireGps({
+  latitude,
+  longitude,
+  onEnregistrer,
+  enCours,
+}: {
+  latitude: number | null;
+  longitude: number | null;
+  onEnregistrer: (latitude: number | null, longitude: number | null) => void;
+  enCours: boolean;
+}) {
+  const [lat, setLat] = useState(latitude != null ? String(latitude) : "");
+  const [lng, setLng] = useState(longitude != null ? String(longitude) : "");
+
+  function utiliserPositionActuelle() {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      toast.error("Localisation indisponible");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (p) => {
+        setLat(String(p.coords.latitude));
+        setLng(String(p.coords.longitude));
+      },
+      () => toast.error("Autorisation de localisation refusée"),
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }
+
+  return (
+    <div className="mt-3 grid gap-2 rounded-xl bg-muted/50 p-3">
+      <p className="text-xs font-bold">Position du domicile (contrôle des pointages)</p>
+      <div className="grid grid-cols-2 gap-2">
+        <input
+          className={champ}
+          placeholder="Latitude"
+          value={lat}
+          onChange={(e) => setLat(e.target.value)}
+        />
+        <input
+          className={champ}
+          placeholder="Longitude"
+          value={lng}
+          onChange={(e) => setLng(e.target.value)}
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={utiliserPositionActuelle}
+          className="h-10 rounded-xl border border-border text-sm font-semibold"
+        >
+          Ma position
+        </button>
+        <button
+          disabled={enCours}
+          onClick={() =>
+            onEnregistrer(
+              lat.trim() ? Number(lat) : null,
+              lng.trim() ? Number(lng) : null,
+            )
+          }
+          className="h-10 rounded-xl border border-primary text-sm font-semibold text-primary disabled:opacity-60"
+        >
+          Enregistrer
+        </button>
+      </div>
+    </div>
+  );
+}

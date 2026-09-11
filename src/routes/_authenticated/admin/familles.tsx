@@ -68,6 +68,21 @@ function AdminFamilles() {
     onError: () => toast.error("Modification impossible"),
   });
 
+  const enregistrerGps = useMutation({
+    mutationFn: async (v: { id: string; latitude: number | null; longitude: number | null }) => {
+      const { error } = await supabase
+        .from("familles")
+        .update({ latitude: v.latitude, longitude: v.longitude })
+        .eq("id", v.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Position du domicile enregistrée");
+      queryClient.invalidateQueries({ queryKey: ["admin-familles"] });
+    },
+    onError: () => toast.error("Enregistrement impossible"),
+  });
+
   const ajouterEnfant = useMutation({
     mutationFn: async (v: {
       famille_id: string;

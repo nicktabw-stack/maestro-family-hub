@@ -221,6 +221,15 @@ function AdminFamilles() {
                       </ul>
                     )}
 
+                    <FormulaireGps
+                      latitude={(f as { latitude: number | null }).latitude}
+                      longitude={(f as { longitude: number | null }).longitude}
+                      enCours={enregistrerGps.isPending}
+                      onEnregistrer={(latitude, longitude) =>
+                        enregistrerGps.mutate({ id: f.id, latitude, longitude })
+                      }
+                    />
+
                     <FormulaireEnfant
                       enCours={ajouterEnfant.isPending}
                       onAjouter={(v) => ajouterEnfant.mutate({ famille_id: f.id, ...v })}

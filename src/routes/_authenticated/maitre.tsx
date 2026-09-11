@@ -151,7 +151,7 @@ function EspaceMaitre() {
         _date: saisie.date,
         _debut: saisie.debut,
         _fin: saisie.fin,
-        _matiere: saisie.matiere.trim() || null,
+        ...(saisie.matiere.trim() ? { _matiere: saisie.matiere.trim() } : {}),
       });
       if (error) throw error;
     },

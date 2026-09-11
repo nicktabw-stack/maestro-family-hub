@@ -68,6 +68,21 @@ function AdminFamilles() {
     onError: () => toast.error("Modification impossible"),
   });
 
+  const enregistrerGps = useMutation({
+    mutationFn: async (v: { id: string; latitude: number | null; longitude: number | null }) => {
+      const { error } = await supabase
+        .from("familles")
+        .update({ latitude: v.latitude, longitude: v.longitude })
+        .eq("id", v.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Position du domicile enregistrée");
+      queryClient.invalidateQueries({ queryKey: ["admin-familles"] });
+    },
+    onError: () => toast.error("Enregistrement impossible"),
+  });
+
   const ajouterEnfant = useMutation({
     mutationFn: async (v: {
       famille_id: string;
@@ -206,6 +221,15 @@ function AdminFamilles() {
                       </ul>
                     )}
 
+                    <FormulaireGps
+                      latitude={(f as { latitude: number | null }).latitude}
+                      longitude={(f as { longitude: number | null }).longitude}
+                      enCours={enregistrerGps.isPending}
+                      onEnregistrer={(latitude, longitude) =>
+                        enregistrerGps.mutate({ id: f.id, latitude, longitude })
+                      }
+                    />
+
                     <FormulaireEnfant
                       enCours={ajouterEnfant.isPending}
                       onAjouter={(v) => ajouterEnfant.mutate({ famille_id: f.id, ...v })}
@@ -262,6 +286,76 @@ function FormulaireEnfant({
       >
         Ajouter l'enfant
       </button>
+    </div>
+  );
+}
+
+function FormulaireGps({
+  latitude,
+  longitude,
+  onEnregistrer,
+  enCours,
+}: {
+  latitude: number | null;
+  longitude: number | null;
+  onEnregistrer: (latitude: number | null, longitude: number | null) => void;
+  enCours: boolean;
+}) {
+  const [lat, setLat] = useState(latitude != null ? String(latitude) : "");
+  const [lng, setLng] = useState(longitude != null ? String(longitude) : "");
+
+  function utiliserPositionActuelle() {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      toast.error("Localisation indisponible");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (p) => {
+        setLat(String(p.coords.latitude));
+        setLng(String(p.coords.longitude));
+      },
+      () => toast.error("Autorisation de localisation refusée"),
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }
+
+  return (
+    <div className="mt-3 grid gap-2 rounded-xl bg-muted/50 p-3">
+      <p className="text-xs font-bold">Position du domicile (contrôle des pointages)</p>
+      <div className="grid grid-cols-2 gap-2">
+        <input
+          className={champ}
+          placeholder="Latitude"
+          value={lat}
+          onChange={(e) => setLat(e.target.value)}
+        />
+        <input
+          className={champ}
+          placeholder="Longitude"
+          value={lng}
+          onChange={(e) => setLng(e.target.value)}
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={utiliserPositionActuelle}
+          className="h-10 rounded-xl border border-border text-sm font-semibold"
+        >
+          Ma position
+        </button>
+        <button
+          disabled={enCours}
+          onClick={() =>
+            onEnregistrer(
+              lat.trim() ? Number(lat) : null,
+              lng.trim() ? Number(lng) : null,
+            )
+          }
+          className="h-10 rounded-xl border border-primary text-sm font-semibold text-primary disabled:opacity-60"
+        >
+          Enregistrer
+        </button>
+      </div>
     </div>
   );
 }

@@ -185,13 +185,20 @@ export type Database = {
           compte_rendu: string | null
           created_at: string
           date_cours: string
+          debut_reel: string | null
+          distance_m: number | null
           enfant_id: string
+          fin_reelle: string | null
+          gps_lat: number | null
+          gps_lng: number | null
           heure_debut: string
           heure_fin: string
           id: string
           maitre_id: string
           maitre_remplacant_id: string | null
           matiere: string | null
+          position_incoherente: boolean
+          saisie_manuelle: boolean
           statut: Database["public"]["Enums"]["cours_statut"]
           updated_at: string
         }
@@ -199,13 +206,20 @@ export type Database = {
           compte_rendu?: string | null
           created_at?: string
           date_cours: string
+          debut_reel?: string | null
+          distance_m?: number | null
           enfant_id: string
+          fin_reelle?: string | null
+          gps_lat?: number | null
+          gps_lng?: number | null
           heure_debut?: string
           heure_fin?: string
           id?: string
           maitre_id: string
           maitre_remplacant_id?: string | null
           matiere?: string | null
+          position_incoherente?: boolean
+          saisie_manuelle?: boolean
           statut?: Database["public"]["Enums"]["cours_statut"]
           updated_at?: string
         }
@@ -213,13 +227,20 @@ export type Database = {
           compte_rendu?: string | null
           created_at?: string
           date_cours?: string
+          debut_reel?: string | null
+          distance_m?: number | null
           enfant_id?: string
+          fin_reelle?: string | null
+          gps_lat?: number | null
+          gps_lng?: number | null
           heure_debut?: string
           heure_fin?: string
           id?: string
           maitre_id?: string
           maitre_remplacant_id?: string | null
           matiere?: string | null
+          position_incoherente?: boolean
+          saisie_manuelle?: boolean
           statut?: Database["public"]["Enums"]["cours_statut"]
           updated_at?: string
         }
@@ -300,6 +321,8 @@ export type Database = {
           adresse: string | null
           created_at: string
           id: string
+          latitude: number | null
+          longitude: number | null
           nom: string
           notes_admin: string | null
           quartier: string | null
@@ -312,6 +335,8 @@ export type Database = {
           adresse?: string | null
           created_at?: string
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           nom?: string
           notes_admin?: string | null
           quartier?: string | null
@@ -324,6 +349,8 @@ export type Database = {
           adresse?: string | null
           created_at?: string
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           nom?: string
           notes_admin?: string | null
           quartier?: string | null
@@ -492,6 +519,15 @@ export type Database = {
     Functions: {
       claim_admin_role: { Args: never; Returns: boolean }
       current_maitre_id: { Args: never; Returns: string }
+      demarrer_cours: {
+        Args: {
+          _enfant_id: string
+          _lat: number
+          _lng: number
+          _matiere?: string
+        }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -501,6 +537,17 @@ export type Database = {
       }
       is_famille_owner: { Args: { _famille_id: string }; Returns: boolean }
       maitre_suit_enfant: { Args: { _enfant_id: string }; Returns: boolean }
+      saisir_cours_manuel: {
+        Args: {
+          _date: string
+          _debut: string
+          _enfant_id: string
+          _fin: string
+          _matiere?: string
+        }
+        Returns: string
+      }
+      terminer_cours: { Args: { _cours_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "maitre" | "famille"

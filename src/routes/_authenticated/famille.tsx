@@ -108,22 +108,31 @@ function EspaceFamille() {
           timeout: 15000,
         });
       });
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("familles")
         .update({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
         })
-        .eq("id", famille.id);
+        .eq("id", famille.id)
+        .select("id, latitude, longitude")
+        .maybeSingle();
       if (error) throw error;
+      if (!data) throw new Error("non-enregistre");
+      return data;
     },
-    onSuccess: () => {
-      toast.success("Position du domicile enregistrée");
+    onSuccess: (data) => {
+      toast.success("Position enregistrée", {
+        description: `${data.latitude?.toFixed(5)}, ${data.longitude?.toFixed(5)}`,
+      });
       queryClient.invalidateQueries({ queryKey: ["famille", user?.id] });
     },
-    onError: () =>
+    onError: (err) =>
       toast.error("Position non enregistrée", {
-        description: "Vérifiez que la localisation est autorisée puis réessayez.",
+        description:
+          err instanceof Error && err.message === "non-enregistre"
+            ? "Votre fiche famille n'est pas encore reliée à votre compte. Contactez l'administration."
+            : "Vérifiez que la localisation est autorisée puis réessayez.",
       }),
   });
 

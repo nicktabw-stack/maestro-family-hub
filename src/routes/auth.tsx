@@ -277,9 +277,11 @@ function FormInscription({ onMode }: { onMode: (m: Mode) => void }) {
   const [diplome, setDiplome] = useState<File | null>(null);
   const [cv, setCv] = useState<File | null>(null);
   const [enCours, setEnCours] = useState(false);
+  const [erreur, setErreur] = useState<string | null>(null);
 
   async function soumettre(e: React.FormEvent) {
     e.preventDefault();
+    setErreur(null);
     if (nom.trim().length < 2) {
       toast.error("Veuillez indiquer un nom complet.");
       return;
@@ -294,6 +296,8 @@ function FormInscription({ onMode }: { onMode: (m: Mode) => void }) {
       });
       return;
     }
+    const dejaUtilise =
+      "Cette adresse e-mail est déjà utilisée. Connectez-vous ou utilisez-en une autre.";
     setEnCours(true);
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -301,9 +305,32 @@ function FormInscription({ onMode }: { onMode: (m: Mode) => void }) {
         password: motDePasse,
         options: { emailRedirectTo: window.location.origin },
       });
-      if (error) throw error;
+      if (error) {
+        const m = error.message.toLowerCase();
+        if (
+          m.includes("already registered") ||
+          m.includes("already been registered") ||
+          m.includes("already exists") ||
+          error.status === 422
+        ) {
+          setErreur(dejaUtilise);
+          toast.error("Inscription impossible", { description: dejaUtilise });
+          return;
+        }
+        throw error;
+      }
       const user = data.user;
-      if (!user) throw new Error("Compte non créé");
+      if (!user || (user.identities && user.identities.length === 0)) {
+        setErreur(dejaUtilise);
+        toast.error("Inscription impossible", { description: dejaUtilise });
+        return;
+      }
+      if (!data.session) {
+        setErreur(dejaUtilise);
+        toast.error("Inscription impossible", { description: dejaUtilise });
+        return;
+      }
+
 
       await supabase.from("profiles").insert({
         id: user.id,

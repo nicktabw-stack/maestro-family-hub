@@ -383,6 +383,7 @@ function FormInscription({ onMode }: { onMode: (m: Mode) => void }) {
       navigate({ to: "/espace", replace: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Réessayez plus tard.";
+      setErreur(message);
       toast.error("Inscription impossible", { description: message });
     } finally {
       setEnCours(false);

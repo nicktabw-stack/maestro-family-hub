@@ -93,7 +93,44 @@ function EspaceFamille() {
     },
   });
 
+  const queryClient = useQueryClient();
+
+  const enregistrerPosition = useMutation({
+    mutationFn: async () => {
+      if (!famille?.id) throw new Error("no famille");
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        if (typeof navigator === "undefined" || !navigator.geolocation) {
+          reject(new Error("unsupported"));
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 15000,
+        });
+      });
+      const { error } = await supabase
+        .from("familles")
+        .update({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        })
+        .eq("id", famille.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Position du domicile enregistrée");
+      queryClient.invalidateQueries({ queryKey: ["famille", user?.id] });
+    },
+    onError: () =>
+      toast.error("Position non enregistrée", {
+        description: "Vérifiez que la localisation est autorisée puis réessayez.",
+      }),
+  });
+
   if (isLoading) return <Chargement />;
+
+  const latitude = famille?.latitude ?? null;
+  const longitude = famille?.longitude ?? null;
 
   return (
     <AppShell role="famille" title="Espace famille" subtitle={profil?.full_name ?? undefined}>
@@ -102,6 +139,27 @@ function EspaceFamille() {
         <p className="text-sm text-muted-foreground">
           {[famille?.quartier, famille?.adresse].filter(Boolean).join(" · ") || "Adresse à compléter"}
         </p>
+
+        <div className="mt-3 rounded-xl bg-muted/50 p-3">
+          <p className="text-xs font-bold">Position du domicile</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {latitude != null && longitude != null
+              ? `Enregistrée : ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`
+              : "Aucune position enregistrée. Elle sert à vérifier les pointages du maître."}
+          </p>
+          <button
+            disabled={!famille?.id || enregistrerPosition.isPending}
+            onClick={() => enregistrerPosition.mutate()}
+            className="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-primary text-sm font-semibold text-primary disabled:opacity-60"
+          >
+            <MapPin className="h-4 w-4" />
+            {enregistrerPosition.isPending
+              ? "Localisation en cours…"
+              : latitude != null
+                ? "Mettre à jour ma position"
+                : "Enregistrer ma position"}
+          </button>
+        </div>
       </section>
 
       <Bloc titre="Mes enfants">

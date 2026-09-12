@@ -221,6 +221,11 @@ function AdminFamilles() {
                       </ul>
                     )}
 
+                    <PositionEnregistree
+                      latitude={(f as { latitude: number | null }).latitude}
+                      longitude={(f as { longitude: number | null }).longitude}
+                    />
+
                     <FormulaireGps
                       latitude={(f as { latitude: number | null }).latitude}
                       longitude={(f as { longitude: number | null }).longitude}

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, ChevronDown } from "lucide-react";
+import { Plus, ChevronDown, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
 import { EtatVide } from "@/components/chargement";
@@ -221,6 +221,11 @@ function AdminFamilles() {
                       </ul>
                     )}
 
+                    <PositionEnregistree
+                      latitude={(f as { latitude: number | null }).latitude}
+                      longitude={(f as { longitude: number | null }).longitude}
+                    />
+
                     <FormulaireGps
                       latitude={(f as { latitude: number | null }).latitude}
                       longitude={(f as { longitude: number | null }).longitude}
@@ -290,6 +295,38 @@ function FormulaireEnfant({
   );
 }
 
+function PositionEnregistree({
+  latitude,
+  longitude,
+}: {
+  latitude: number | null;
+  longitude: number | null;
+}) {
+  const definie = latitude != null && longitude != null;
+  return (
+    <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border border-border p-3">
+      <div className="flex min-w-0 items-center gap-2">
+        <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <p className="truncate text-xs text-muted-foreground">
+          {definie
+            ? `Position du domicile : ${latitude!.toFixed(5)}, ${longitude!.toFixed(5)}`
+            : "Position du domicile non enregistrée"}
+        </p>
+      </div>
+      {definie ? (
+        <a
+          href={`https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=18/${latitude}/${longitude}`}
+          target="_blank"
+          rel="noreferrer"
+          className="shrink-0 text-xs font-semibold text-primary"
+        >
+          Voir la carte
+        </a>
+      ) : null}
+    </div>
+  );
+}
+
 function FormulaireGps({
   latitude,
   longitude,
@@ -321,7 +358,11 @@ function FormulaireGps({
 
   return (
     <div className="mt-3 grid gap-2 rounded-xl bg-muted/50 p-3">
-      <p className="text-xs font-bold">Position du domicile (contrôle des pointages)</p>
+      <p className="text-xs font-bold">
+        {latitude != null && longitude != null
+          ? "Mettre à jour la position du domicile"
+          : "Enregistrer la position du domicile (contrôle des pointages)"}
+      </p>
       <div className="grid grid-cols-2 gap-2">
         <input
           className={champ}

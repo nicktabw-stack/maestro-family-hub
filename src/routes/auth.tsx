@@ -326,10 +326,12 @@ function FormInscription({ onMode }: { onMode: (m: Mode) => void }) {
         return;
       }
       if (!data.session) {
-        setErreur(dejaUtilise);
-        toast.error("Inscription impossible", { description: dejaUtilise });
+        const m = "Compte créé. Confirmez votre e-mail puis connectez-vous.";
+        setErreur(m);
+        toast.success(m);
         return;
       }
+
 
 
       await supabase.from("profiles").insert({

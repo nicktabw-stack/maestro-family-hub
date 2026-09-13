@@ -14,12 +14,14 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedEspaceRouteImport } from './routes/_authenticated/espace'
-import { Route as AuthenticatedFamilleRouteImport } from './routes/_authenticated/famille'
 import { Route as AuthenticatedMaitreRouteImport } from './routes/_authenticated/maitre'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedAdminAffectationsRouteImport } from './routes/_authenticated/admin/affectations'
+import { Route as AuthenticatedAdminCoursRouteImport } from './routes/_authenticated/admin/cours'
 import { Route as AuthenticatedAdminFamillesRouteImport } from './routes/_authenticated/admin/familles'
 import { Route as AuthenticatedAdminMaitresRouteImport } from './routes/_authenticated/admin/maitres'
+import { Route as AuthenticatedFamilleIndexRouteImport } from './routes/_authenticated/famille/index'
+import { Route as AuthenticatedFamilleCoursRouteImport } from './routes/_authenticated/famille/cours'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -45,11 +47,6 @@ const AuthenticatedEspaceRoute = AuthenticatedEspaceRouteImport.update({
   path: '/espace',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedFamilleRoute = AuthenticatedFamilleRouteImport.update({
-  id: '/famille',
-  path: '/famille',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedMaitreRoute = AuthenticatedMaitreRouteImport.update({
   id: '/maitre',
   path: '/maitre',
@@ -66,6 +63,11 @@ const AuthenticatedAdminAffectationsRoute =
     path: '/admin/affectations',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminCoursRoute = AuthenticatedAdminCoursRouteImport.update({
+  id: '/admin/cours',
+  path: '/admin/cours',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminFamillesRoute =
   AuthenticatedAdminFamillesRouteImport.update({
     id: '/admin/familles',
@@ -78,30 +80,46 @@ const AuthenticatedAdminMaitresRoute =
     path: '/admin/maitres',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedFamilleIndexRoute =
+  AuthenticatedFamilleIndexRouteImport.update({
+    id: '/famille/',
+    path: '/famille/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFamilleCoursRoute =
+  AuthenticatedFamilleCoursRouteImport.update({
+    id: '/famille/cours',
+    path: '/famille/cours',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/espace': typeof AuthenticatedEspaceRoute
-  '/famille': typeof AuthenticatedFamilleRoute
   '/maitre': typeof AuthenticatedMaitreRoute
   '/admin/affectations': typeof AuthenticatedAdminAffectationsRoute
+  '/admin/cours': typeof AuthenticatedAdminCoursRoute
   '/admin/familles': typeof AuthenticatedAdminFamillesRoute
   '/admin/maitres': typeof AuthenticatedAdminMaitresRoute
+  '/famille/cours': typeof AuthenticatedFamilleCoursRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/famille/': typeof AuthenticatedFamilleIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/espace': typeof AuthenticatedEspaceRoute
-  '/famille': typeof AuthenticatedFamilleRoute
   '/maitre': typeof AuthenticatedMaitreRoute
   '/admin/affectations': typeof AuthenticatedAdminAffectationsRoute
+  '/admin/cours': typeof AuthenticatedAdminCoursRoute
   '/admin/familles': typeof AuthenticatedAdminFamillesRoute
   '/admin/maitres': typeof AuthenticatedAdminMaitresRoute
+  '/famille/cours': typeof AuthenticatedFamilleCoursRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/famille': typeof AuthenticatedFamilleIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -110,12 +128,14 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/espace': typeof AuthenticatedEspaceRoute
-  '/_authenticated/famille': typeof AuthenticatedFamilleRoute
   '/_authenticated/maitre': typeof AuthenticatedMaitreRoute
   '/_authenticated/admin/affectations': typeof AuthenticatedAdminAffectationsRoute
+  '/_authenticated/admin/cours': typeof AuthenticatedAdminCoursRoute
   '/_authenticated/admin/familles': typeof AuthenticatedAdminFamillesRoute
   '/_authenticated/admin/maitres': typeof AuthenticatedAdminMaitresRoute
+  '/_authenticated/famille/cours': typeof AuthenticatedFamilleCoursRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/famille/': typeof AuthenticatedFamilleIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -124,24 +144,28 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/espace'
-    | '/famille'
     | '/maitre'
     | '/admin/affectations'
+    | '/admin/cours'
     | '/admin/familles'
     | '/admin/maitres'
+    | '/famille/cours'
     | '/admin/'
+    | '/famille/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/reset-password'
     | '/espace'
-    | '/famille'
     | '/maitre'
     | '/admin/affectations'
+    | '/admin/cours'
     | '/admin/familles'
     | '/admin/maitres'
+    | '/famille/cours'
     | '/admin'
+    | '/famille'
   id:
     | '__root__'
     | '/'
@@ -149,12 +173,14 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/_authenticated/espace'
-    | '/_authenticated/famille'
     | '/_authenticated/maitre'
     | '/_authenticated/admin/affectations'
+    | '/_authenticated/admin/cours'
     | '/_authenticated/admin/familles'
     | '/_authenticated/admin/maitres'
+    | '/_authenticated/famille/cours'
     | '/_authenticated/admin/'
+    | '/_authenticated/famille/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -201,13 +227,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEspaceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/famille': {
-      id: '/_authenticated/famille'
-      path: '/famille'
-      fullPath: '/famille'
-      preLoaderRoute: typeof AuthenticatedFamilleRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/maitre': {
       id: '/_authenticated/maitre'
       path: '/maitre'
@@ -229,6 +248,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAffectationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/cours': {
+      id: '/_authenticated/admin/cours'
+      path: '/admin/cours'
+      fullPath: '/admin/cours'
+      preLoaderRoute: typeof AuthenticatedAdminCoursRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/familles': {
       id: '/_authenticated/admin/familles'
       path: '/admin/familles'
@@ -243,27 +269,45 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminMaitresRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/famille/': {
+      id: '/_authenticated/famille/'
+      path: '/famille'
+      fullPath: '/famille/'
+      preLoaderRoute: typeof AuthenticatedFamilleIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/famille/cours': {
+      id: '/_authenticated/famille/cours'
+      path: '/famille/cours'
+      fullPath: '/famille/cours'
+      preLoaderRoute: typeof AuthenticatedFamilleCoursRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedEspaceRoute: typeof AuthenticatedEspaceRoute
-  AuthenticatedFamilleRoute: typeof AuthenticatedFamilleRoute
   AuthenticatedMaitreRoute: typeof AuthenticatedMaitreRoute
   AuthenticatedAdminAffectationsRoute: typeof AuthenticatedAdminAffectationsRoute
+  AuthenticatedAdminCoursRoute: typeof AuthenticatedAdminCoursRoute
   AuthenticatedAdminFamillesRoute: typeof AuthenticatedAdminFamillesRoute
   AuthenticatedAdminMaitresRoute: typeof AuthenticatedAdminMaitresRoute
+  AuthenticatedFamilleCoursRoute: typeof AuthenticatedFamilleCoursRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+  AuthenticatedFamilleIndexRoute: typeof AuthenticatedFamilleIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEspaceRoute: AuthenticatedEspaceRoute,
-  AuthenticatedFamilleRoute: AuthenticatedFamilleRoute,
   AuthenticatedMaitreRoute: AuthenticatedMaitreRoute,
   AuthenticatedAdminAffectationsRoute: AuthenticatedAdminAffectationsRoute,
+  AuthenticatedAdminCoursRoute: AuthenticatedAdminCoursRoute,
   AuthenticatedAdminFamillesRoute: AuthenticatedAdminFamillesRoute,
   AuthenticatedAdminMaitresRoute: AuthenticatedAdminMaitresRoute,
+  AuthenticatedFamilleCoursRoute: AuthenticatedFamilleCoursRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+  AuthenticatedFamilleIndexRoute: AuthenticatedFamilleIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

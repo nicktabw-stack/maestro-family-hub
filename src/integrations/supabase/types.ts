@@ -183,6 +183,8 @@ export type Database = {
       cours: {
         Row: {
           compte_rendu: string | null
+          confirme_famille: boolean
+          confirme_famille_at: string | null
           created_at: string
           date_cours: string
           debut_reel: string | null
@@ -204,6 +206,8 @@ export type Database = {
         }
         Insert: {
           compte_rendu?: string | null
+          confirme_famille?: boolean
+          confirme_famille_at?: string | null
           created_at?: string
           date_cours: string
           debut_reel?: string | null
@@ -225,6 +229,8 @@ export type Database = {
         }
         Update: {
           compte_rendu?: string | null
+          confirme_famille?: boolean
+          confirme_famille_at?: string | null
           created_at?: string
           date_cours?: string
           debut_reel?: string | null
@@ -518,6 +524,7 @@ export type Database = {
     }
     Functions: {
       claim_admin_role: { Args: never; Returns: boolean }
+      confirmer_cours: { Args: { _cours_id: string }; Returns: undefined }
       current_maitre_id: { Args: never; Returns: string }
       demarrer_cours: {
         Args: {

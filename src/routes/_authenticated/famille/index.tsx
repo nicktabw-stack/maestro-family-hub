@@ -15,7 +15,7 @@ import {
 import { formatJourCourt, formatMois, formatMontant } from "@/lib/format";
 import { geolocationErrorMessage, getCurrentPosition } from "@/lib/geolocation";
 
-export const Route = createFileRoute("/_authenticated/famille")({
+export const Route = createFileRoute("/_authenticated/famille/")({
   component: EspaceFamille,
 });
 

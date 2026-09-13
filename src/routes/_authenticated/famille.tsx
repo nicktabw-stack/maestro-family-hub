@@ -13,6 +13,7 @@ import {
   tonPaiement,
 } from "@/components/statut-badge";
 import { formatJourCourt, formatMois, formatMontant } from "@/lib/format";
+import { geolocationErrorMessage, getCurrentPosition } from "@/lib/geolocation";
 
 export const Route = createFileRoute("/_authenticated/famille")({
   component: EspaceFamille,
@@ -98,16 +99,7 @@ function EspaceFamille() {
   const enregistrerPosition = useMutation({
     mutationFn: async () => {
       if (!famille?.id) throw new Error("no famille");
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        if (typeof navigator === "undefined" || !navigator.geolocation) {
-          reject(new Error("unsupported"));
-          return;
-        }
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 15000,
-        });
-      });
+      const position = await getCurrentPosition();
       const { data, error } = await supabase
         .from("familles")
         .update({
@@ -122,18 +114,24 @@ function EspaceFamille() {
       return data;
     },
     onSuccess: (data) => {
+      queryClient.setQueryData(["famille", user?.id], (ancienne: typeof famille) =>
+        ancienne ? { ...ancienne, latitude: data.latitude, longitude: data.longitude } : ancienne,
+      );
       toast.success("Position enregistrée", {
         description: `${data.latitude?.toFixed(5)}, ${data.longitude?.toFixed(5)}`,
       });
       queryClient.invalidateQueries({ queryKey: ["famille", user?.id] });
     },
-    onError: (err) =>
+    onError: (err) => {
+      const description =
+        err instanceof Error && err.message === "non-enregistre"
+          ? "Votre fiche famille n'est pas encore reliée à votre compte. Contactez l'administration."
+          : geolocationErrorMessage(err);
       toast.error("Position non enregistrée", {
-        description:
-          err instanceof Error && err.message === "non-enregistre"
-            ? "Votre fiche famille n'est pas encore reliée à votre compte. Contactez l'administration."
-            : "Vérifiez que la localisation est autorisée puis réessayez.",
-      }),
+        description,
+        duration: 7000,
+      });
+    },
   });
 
   if (isLoading) return <Chargement />;

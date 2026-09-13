@@ -8,6 +8,7 @@ import { AppShell } from "@/components/app-shell";
 import { EtatVide } from "@/components/chargement";
 import { EcranAttenteAdmin, useGardeAdmin } from "@/components/garde-admin";
 import { cn } from "@/lib/utils";
+import { geolocationErrorMessage, getCurrentPosition } from "@/lib/geolocation";
 
 export const Route = createFileRoute("/_authenticated/admin/familles")({
   component: AdminFamilles,
@@ -70,17 +71,26 @@ function AdminFamilles() {
 
   const enregistrerGps = useMutation({
     mutationFn: async (v: { id: string; latitude: number | null; longitude: number | null }) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("familles")
         .update({ latitude: v.latitude, longitude: v.longitude })
-        .eq("id", v.id);
+        .eq("id", v.id)
+        .select("id, latitude, longitude")
+        .maybeSingle();
       if (error) throw error;
+      if (!data) throw new Error("non-enregistre");
+      return data;
     },
-    onSuccess: () => {
-      toast.success("Position du domicile enregistrée");
+    onSuccess: (data) => {
+      toast.success("Position du domicile enregistrée", {
+        description: `${data.latitude?.toFixed(5)}, ${data.longitude?.toFixed(5)}`,
+      });
       queryClient.invalidateQueries({ queryKey: ["admin-familles"] });
     },
-    onError: () => toast.error("Enregistrement impossible"),
+    onError: () =>
+      toast.error("Enregistrement impossible", {
+        description: "La position n’a pas été sauvegardée. Réessayez.",
+      }),
   });
 
   const ajouterEnfant = useMutation({
@@ -340,20 +350,26 @@ function FormulaireGps({
 }) {
   const [lat, setLat] = useState(latitude != null ? String(latitude) : "");
   const [lng, setLng] = useState(longitude != null ? String(longitude) : "");
+  const [localisationEnCours, setLocalisationEnCours] = useState(false);
 
-  function utiliserPositionActuelle() {
-    if (typeof navigator === "undefined" || !navigator.geolocation) {
-      toast.error("Localisation indisponible");
-      return;
+  async function utiliserPositionActuelle() {
+    if (localisationEnCours || enCours) return;
+    setLocalisationEnCours(true);
+    try {
+      const position = await getCurrentPosition();
+      const nouvelleLatitude = position.coords.latitude;
+      const nouvelleLongitude = position.coords.longitude;
+      setLat(String(nouvelleLatitude));
+      setLng(String(nouvelleLongitude));
+      onEnregistrer(nouvelleLatitude, nouvelleLongitude);
+    } catch (error) {
+      toast.error("Position non capturée", {
+        description: geolocationErrorMessage(error),
+        duration: 7000,
+      });
+    } finally {
+      setLocalisationEnCours(false);
     }
-    navigator.geolocation.getCurrentPosition(
-      (p) => {
-        setLat(String(p.coords.latitude));
-        setLng(String(p.coords.longitude));
-      },
-      () => toast.error("Autorisation de localisation refusée"),
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
   }
 
   return (
@@ -379,22 +395,33 @@ function FormulaireGps({
       </div>
       <div className="grid grid-cols-2 gap-2">
         <button
+          disabled={localisationEnCours || enCours}
           onClick={utiliserPositionActuelle}
-          className="h-10 rounded-xl border border-border text-sm font-semibold"
+          className="h-10 rounded-xl border border-border text-sm font-semibold disabled:opacity-60"
         >
-          Ma position
+          {localisationEnCours ? "Localisation en cours…" : "Ma position"}
         </button>
         <button
-          disabled={enCours}
-          onClick={() =>
-            onEnregistrer(
-              lat.trim() ? Number(lat) : null,
-              lng.trim() ? Number(lng) : null,
-            )
-          }
+          disabled={enCours || localisationEnCours || !lat.trim() || !lng.trim()}
+          onClick={() => {
+            const latitudeSaisie = Number(lat);
+            const longitudeSaisie = Number(lng);
+            if (
+              !Number.isFinite(latitudeSaisie) ||
+              !Number.isFinite(longitudeSaisie) ||
+              latitudeSaisie < -90 ||
+              latitudeSaisie > 90 ||
+              longitudeSaisie < -180 ||
+              longitudeSaisie > 180
+            ) {
+              toast.error("Coordonnées invalides");
+              return;
+            }
+            onEnregistrer(latitudeSaisie, longitudeSaisie);
+          }}
           className="h-10 rounded-xl border border-primary text-sm font-semibold text-primary disabled:opacity-60"
         >
-          Enregistrer
+          {enCours ? "Enregistrement…" : "Enregistrer"}
         </button>
       </div>
     </div>

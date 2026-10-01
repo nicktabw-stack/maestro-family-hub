@@ -73,7 +73,10 @@ export function AppShell({
 
       {items.length > 1 ? (
         <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-card">
-          <div className="mx-auto grid max-w-4xl grid-cols-4">
+          <div
+            className="mx-auto grid max-w-4xl"
+            style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+          >
             {items.map((item) => {
               const actif = pathname === item.to;
               return (

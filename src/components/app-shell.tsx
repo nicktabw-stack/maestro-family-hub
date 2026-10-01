@@ -12,11 +12,16 @@ const NAV: Record<Role, NavItem[]> = {
     { to: "/admin", label: "Synthèse" },
     { to: "/admin/maitres", label: "Maîtres" },
     { to: "/admin/familles", label: "Familles" },
-    { to: "/admin/affectations", label: "Affectations" },
+    { to: "/admin/affectations", label: "Affect." },
+    { to: "/admin/cours", label: "Cours" },
   ],
   maitre: [{ to: "/maitre", label: "Mon espace" }],
-  famille: [{ to: "/famille", label: "Mon espace" }],
+  famille: [
+    { to: "/famille", label: "Mon espace" },
+    { to: "/famille/cours", label: "Cours à confirmer" },
+  ],
 };
+
 
 export function AppShell({
   role,

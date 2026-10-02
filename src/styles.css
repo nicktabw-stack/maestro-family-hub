@@ -142,4 +142,13 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
+
+  /* Garde-fou global : aucune image ne dépasse jamais son conteneur */
+  img,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
+    height: auto;
+  }
 }

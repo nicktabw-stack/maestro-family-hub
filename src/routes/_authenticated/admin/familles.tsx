@@ -325,9 +325,9 @@ function PositionEnregistree({
       </div>
       {definie ? (
         <a
-          href={`https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=18/${latitude}/${longitude}`}
+          href={`https://www.google.com/maps?q=${latitude},${longitude}`}
           target="_blank"
-          rel="noreferrer"
+          rel="noopener noreferrer"
           className="shrink-0 text-xs font-semibold text-primary"
         >
           Voir la carte

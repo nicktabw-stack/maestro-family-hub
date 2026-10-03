@@ -95,6 +95,9 @@ function EspaceFamille() {
   });
 
   const queryClient = useQueryClient();
+  const [messagePosition, setMessagePosition] = useState<
+    { type: "succes" | "erreur"; texte: string } | null
+  >(null);
 
   const enregistrerPosition = useMutation({
     mutationFn: async () => {

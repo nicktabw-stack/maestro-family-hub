@@ -175,6 +175,18 @@ function EspaceFamille() {
                 ? "Mettre à jour ma position"
                 : "Enregistrer ma position"}
           </button>
+          {messagePosition && (
+            <p
+              role={messagePosition.type === "erreur" ? "alert" : "status"}
+              className={`mt-2 rounded-lg px-3 py-2 text-xs font-semibold ${
+                messagePosition.type === "erreur"
+                  ? "bg-destructive/10 text-destructive"
+                  : "bg-primary/10 text-primary"
+              }`}
+            >
+              {messagePosition.texte}
+            </p>
+          )}
         </div>
       </section>
 

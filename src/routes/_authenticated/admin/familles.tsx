@@ -405,6 +405,14 @@ function FormulaireGps({
         >
           {localisationEnCours ? "Localisation en cours…" : "Ma position"}
         </button>
+        {erreurLocalisation && (
+          <p
+            role="alert"
+            className="col-span-2 rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive"
+          >
+            {erreurLocalisation}
+          </p>
+        )}
         <button
           disabled={enCours || localisationEnCours || !lat.trim() || !lng.trim()}
           onClick={() => {

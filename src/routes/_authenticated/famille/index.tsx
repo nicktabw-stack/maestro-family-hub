@@ -120,6 +120,10 @@ function EspaceFamille() {
       queryClient.setQueryData(["famille", user?.id], (ancienne: typeof famille) =>
         ancienne ? { ...ancienne, latitude: data.latitude, longitude: data.longitude } : ancienne,
       );
+      setMessagePosition({
+        type: "succes",
+        texte: `Position enregistrée : ${data.latitude?.toFixed(5)}, ${data.longitude?.toFixed(5)}`,
+      });
       toast.success("Position enregistrée", {
         description: `${data.latitude?.toFixed(5)}, ${data.longitude?.toFixed(5)}`,
       });
@@ -130,11 +134,13 @@ function EspaceFamille() {
         err instanceof Error && err.message === "non-enregistre"
           ? "Votre fiche famille n'est pas encore reliée à votre compte. Contactez l'administration."
           : geolocationErrorMessage(err);
+      setMessagePosition({ type: "erreur", texte: description });
       toast.error("Position non enregistrée", {
         description,
         duration: 7000,
       });
     },
+    onMutate: () => setMessagePosition(null),
   });
 
   if (isLoading) return <Chargement />;

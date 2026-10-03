@@ -351,10 +351,12 @@ function FormulaireGps({
   const [lat, setLat] = useState(latitude != null ? String(latitude) : "");
   const [lng, setLng] = useState(longitude != null ? String(longitude) : "");
   const [localisationEnCours, setLocalisationEnCours] = useState(false);
+  const [erreurLocalisation, setErreurLocalisation] = useState<string | null>(null);
 
   async function utiliserPositionActuelle() {
     if (localisationEnCours || enCours) return;
     setLocalisationEnCours(true);
+    setErreurLocalisation(null);
     try {
       const position = await getCurrentPosition();
       const nouvelleLatitude = position.coords.latitude;
@@ -363,8 +365,10 @@ function FormulaireGps({
       setLng(String(nouvelleLongitude));
       onEnregistrer(nouvelleLatitude, nouvelleLongitude);
     } catch (error) {
+      const message = geolocationErrorMessage(error);
+      setErreurLocalisation(message);
       toast.error("Position non capturée", {
-        description: geolocationErrorMessage(error),
+        description: message,
         duration: 7000,
       });
     } finally {
@@ -401,6 +405,14 @@ function FormulaireGps({
         >
           {localisationEnCours ? "Localisation en cours…" : "Ma position"}
         </button>
+        {erreurLocalisation && (
+          <p
+            role="alert"
+            className="col-span-2 rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive"
+          >
+            {erreurLocalisation}
+          </p>
+        )}
         <button
           disabled={enCours || localisationEnCours || !lat.trim() || !lng.trim()}
           onClick={() => {

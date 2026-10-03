@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { MapPin } from "lucide-react";
@@ -95,6 +96,9 @@ function EspaceFamille() {
   });
 
   const queryClient = useQueryClient();
+  const [messagePosition, setMessagePosition] = useState<
+    { type: "succes" | "erreur"; texte: string } | null
+  >(null);
 
   const enregistrerPosition = useMutation({
     mutationFn: async () => {
@@ -117,6 +121,10 @@ function EspaceFamille() {
       queryClient.setQueryData(["famille", user?.id], (ancienne: typeof famille) =>
         ancienne ? { ...ancienne, latitude: data.latitude, longitude: data.longitude } : ancienne,
       );
+      setMessagePosition({
+        type: "succes",
+        texte: `Position enregistrée : ${data.latitude?.toFixed(5)}, ${data.longitude?.toFixed(5)}`,
+      });
       toast.success("Position enregistrée", {
         description: `${data.latitude?.toFixed(5)}, ${data.longitude?.toFixed(5)}`,
       });
@@ -127,11 +135,13 @@ function EspaceFamille() {
         err instanceof Error && err.message === "non-enregistre"
           ? "Votre fiche famille n'est pas encore reliée à votre compte. Contactez l'administration."
           : geolocationErrorMessage(err);
+      setMessagePosition({ type: "erreur", texte: description });
       toast.error("Position non enregistrée", {
         description,
         duration: 7000,
       });
     },
+    onMutate: () => setMessagePosition(null),
   });
 
   if (isLoading) return <Chargement />;
@@ -166,6 +176,18 @@ function EspaceFamille() {
                 ? "Mettre à jour ma position"
                 : "Enregistrer ma position"}
           </button>
+          {messagePosition && (
+            <p
+              role={messagePosition.type === "erreur" ? "alert" : "status"}
+              className={`mt-2 rounded-lg px-3 py-2 text-xs font-semibold ${
+                messagePosition.type === "erreur"
+                  ? "bg-destructive/10 text-destructive"
+                  : "bg-primary/10 text-primary"
+              }`}
+            >
+              {messagePosition.texte}
+            </p>
+          )}
         </div>
       </section>
 

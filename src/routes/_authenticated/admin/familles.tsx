@@ -2,11 +2,13 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, ChevronDown, MapPin } from "lucide-react";
+import { Plus, ChevronDown, MapPin, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
 import { EtatVide } from "@/components/chargement";
 import { EcranAttenteAdmin, useGardeAdmin } from "@/components/garde-admin";
+import { StatutBadge, libellePaiement, tonPaiement } from "@/components/statut-badge";
+import { formatMois, formatMontant } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { geolocationErrorMessage, getCurrentPosition } from "@/lib/geolocation";
 
@@ -35,7 +37,7 @@ function AdminFamilles() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("familles")
-        .select("*, enfants(id, prenom, nom, niveau, actif)")
+        .select("*, enfants(id, prenom, nom, niveau, actif), paiements(id, mois, statut, montant_paye, montant_du)")
         .order("nom");
       if (error) throw error;
       return data ?? [];
@@ -90,6 +92,32 @@ function AdminFamilles() {
     onError: () =>
       toast.error("Enregistrement impossible", {
         description: "La position n’a pas été sauvegardée. Réessayez.",
+      }),
+  });
+
+  const marquerPaye = useMutation({
+    mutationFn: async ({ id }: { id: string }) => {
+      const { data: paiement, error: erreurLecture } = await supabase
+        .from("paiements")
+        .select("montant_du")
+        .eq("id", id)
+        .maybeSingle();
+      if (erreurLecture) throw erreurLecture;
+      const { error } = await supabase
+        .from("paiements")
+        .update({ statut: "a_jour", montant_paye: paiement?.montant_du ?? null })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Paiement confirmé", {
+        description: "La famille est désormais à jour pour ce mois.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["admin-familles"] });
+    },
+    onError: () =>
+      toast.error("Confirmation impossible", {
+        description: "Le paiement n’a pas été mis à jour. Réessayez.",
       }),
   });
 

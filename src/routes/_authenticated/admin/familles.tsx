@@ -273,6 +273,12 @@ function AdminFamilles() {
                       }
                     />
 
+                    <SectionPaiements
+                      paiements={(f as { paiements?: PaiementFamille[] }).paiements ?? []}
+                      enCours={marquerPaye.isPending}
+                      onMarquer={(id) => marquerPaye.mutate({ id })}
+                    />
+
                     <FormulaireEnfant
                       enCours={ajouterEnfant.isPending}
                       onAjouter={(v) => ajouterEnfant.mutate({ famille_id: f.id, ...v })}
@@ -464,6 +470,62 @@ function FormulaireGps({
           {enCours ? "Enregistrement…" : "Enregistrer"}
         </button>
       </div>
+    </div>
+  );
+}
+
+type PaiementFamille = {
+  id: string;
+  mois: string;
+  statut: string;
+  montant_paye: number | string | null;
+  montant_du: number | string | null;
+};
+
+function SectionPaiements({
+  paiements,
+  enCours,
+  onMarquer,
+}: {
+  paiements: PaiementFamille[];
+  enCours: boolean;
+  onMarquer: (id: string) => void;
+}) {
+  if (paiements.length === 0) {
+    return <EtatVide texte="Aucun paiement enregistré pour cette famille." />;
+  }
+  return (
+    <div className="mt-3">
+      <p className="mb-2 text-xs font-bold">Paiements</p>
+      <ul className="space-y-2">
+        {paiements.map((p) => (
+          <li
+            key={p.id}
+            className="flex items-center justify-between gap-2 rounded-xl border border-border p-3"
+          >
+            <div className="min-w-0">
+              <p className="text-sm font-semibold capitalize">{formatMois(p.mois)}</p>
+              <p className="text-xs text-muted-foreground">
+                {formatMontant(Number(p.montant_paye ?? 0))} /{" "}
+                {formatMontant(Number(p.montant_du ?? 0))}
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <StatutBadge ton={tonPaiement(p.statut)}>{libellePaiement(p.statut)}</StatutBadge>
+              {p.statut !== "a_jour" && p.statut !== "annule" ? (
+                <button
+                  disabled={enCours}
+                  onClick={() => onMarquer(p.id)}
+                  className="flex items-center gap-1 rounded-xl border border-primary px-2.5 py-1.5 text-xs font-semibold text-primary disabled:opacity-60"
+                >
+                  <Check className="h-3.5 w-3.5" />
+                  Marquer comme payé
+                </button>
+              ) : null}
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

@@ -2,11 +2,13 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, ChevronDown, MapPin } from "lucide-react";
+import { Plus, ChevronDown, MapPin, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
 import { EtatVide } from "@/components/chargement";
 import { EcranAttenteAdmin, useGardeAdmin } from "@/components/garde-admin";
+import { StatutBadge, libellePaiement, tonPaiement } from "@/components/statut-badge";
+import { formatMois, formatMontant } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { geolocationErrorMessage, getCurrentPosition } from "@/lib/geolocation";
 
@@ -35,7 +37,7 @@ function AdminFamilles() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("familles")
-        .select("*, enfants(id, prenom, nom, niveau, actif)")
+        .select("*, enfants(id, prenom, nom, niveau, actif), paiements(id, mois, statut, montant_paye, montant_du)")
         .order("nom");
       if (error) throw error;
       return data ?? [];
@@ -90,6 +92,32 @@ function AdminFamilles() {
     onError: () =>
       toast.error("Enregistrement impossible", {
         description: "La position n’a pas été sauvegardée. Réessayez.",
+      }),
+  });
+
+  const marquerPaye = useMutation({
+    mutationFn: async ({ id }: { id: string }) => {
+      const { data: paiement, error: erreurLecture } = await supabase
+        .from("paiements")
+        .select("montant_du")
+        .eq("id", id)
+        .maybeSingle();
+      if (erreurLecture) throw erreurLecture;
+      const { error } = await supabase
+        .from("paiements")
+        .update({ statut: "a_jour", montant_paye: paiement?.montant_du ?? 0 })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Paiement confirmé", {
+        description: "La famille est désormais à jour pour ce mois.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["admin-familles"] });
+    },
+    onError: () =>
+      toast.error("Confirmation impossible", {
+        description: "Le paiement n’a pas été mis à jour. Réessayez.",
       }),
   });
 
@@ -243,6 +271,12 @@ function AdminFamilles() {
                       onEnregistrer={(latitude, longitude) =>
                         enregistrerGps.mutate({ id: f.id, latitude, longitude })
                       }
+                    />
+
+                    <SectionPaiements
+                      paiements={(f as { paiements?: PaiementFamille[] }).paiements ?? []}
+                      enCours={marquerPaye.isPending}
+                      onMarquer={(id) => marquerPaye.mutate({ id })}
                     />
 
                     <FormulaireEnfant
@@ -436,6 +470,62 @@ function FormulaireGps({
           {enCours ? "Enregistrement…" : "Enregistrer"}
         </button>
       </div>
+    </div>
+  );
+}
+
+type PaiementFamille = {
+  id: string;
+  mois: string;
+  statut: string;
+  montant_paye: number | string | null;
+  montant_du: number | string | null;
+};
+
+function SectionPaiements({
+  paiements,
+  enCours,
+  onMarquer,
+}: {
+  paiements: PaiementFamille[];
+  enCours: boolean;
+  onMarquer: (id: string) => void;
+}) {
+  if (paiements.length === 0) {
+    return <EtatVide texte="Aucun paiement enregistré pour cette famille." />;
+  }
+  return (
+    <div className="mt-3">
+      <p className="mb-2 text-xs font-bold">Paiements</p>
+      <ul className="space-y-2">
+        {paiements.map((p) => (
+          <li
+            key={p.id}
+            className="flex items-center justify-between gap-2 rounded-xl border border-border p-3"
+          >
+            <div className="min-w-0">
+              <p className="text-sm font-semibold capitalize">{formatMois(p.mois)}</p>
+              <p className="text-xs text-muted-foreground">
+                {formatMontant(Number(p.montant_paye ?? 0))} /{" "}
+                {formatMontant(Number(p.montant_du ?? 0))}
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <StatutBadge ton={tonPaiement(p.statut)}>{libellePaiement(p.statut)}</StatutBadge>
+              {p.statut !== "a_jour" && p.statut !== "annule" ? (
+                <button
+                  disabled={enCours}
+                  onClick={() => onMarquer(p.id)}
+                  className="flex items-center gap-1 rounded-xl border border-primary px-2.5 py-1.5 text-xs font-semibold text-primary disabled:opacity-60"
+                >
+                  <Check className="h-3.5 w-3.5" />
+                  Marquer comme payé
+                </button>
+              ) : null}
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

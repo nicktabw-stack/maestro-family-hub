@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { MapPin } from "lucide-react";
+import { MapPin, Smartphone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useSessionUser } from "@/hooks/use-auth";
 import { AppShell } from "@/components/app-shell";
@@ -15,6 +15,7 @@ import {
 } from "@/components/statut-badge";
 import { formatJourCourt, formatMois, formatMontant } from "@/lib/format";
 import { geolocationErrorMessage, getCurrentPosition } from "@/lib/geolocation";
+import { LIEN_PAIEMENT_WAVE } from "@/lib/paiement";
 
 export const Route = createFileRoute("/_authenticated/famille/")({
   component: EspaceFamille,
@@ -209,6 +210,30 @@ function EspaceFamille() {
       </Bloc>
 
       <Bloc titre="Paiements">
+        <section className="mb-3 rounded-2xl border border-border bg-card p-3">
+          <p className="text-sm font-semibold">
+            Après paiement, informez la structure pour confirmation.
+          </p>
+          {LIEN_PAIEMENT_WAVE ? (
+            <a
+              href={LIEN_PAIEMENT_WAVE}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground"
+            >
+              <Smartphone className="h-4 w-4" />
+              Payer via Wave
+            </a>
+          ) : (
+            <button
+              disabled
+              className="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground opacity-60"
+            >
+              <Smartphone className="h-4 w-4" />
+              Payer via Wave
+            </button>
+          )}
+        </section>
         {!paiements || paiements.length === 0 ? (
           <EtatVide texte="Aucun paiement enregistré." />
         ) : (

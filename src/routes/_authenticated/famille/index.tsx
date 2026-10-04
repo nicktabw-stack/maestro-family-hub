@@ -15,6 +15,7 @@ import {
 } from "@/components/statut-badge";
 import { formatJourCourt, formatMois, formatMontant } from "@/lib/format";
 import { geolocationErrorMessage, getCurrentPosition } from "@/lib/geolocation";
+import { LIEN_PAIEMENT_WAVE } from "@/lib/paiement";
 
 export const Route = createFileRoute("/_authenticated/famille/")({
   component: EspaceFamille,

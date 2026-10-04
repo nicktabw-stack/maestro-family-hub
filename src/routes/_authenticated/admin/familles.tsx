@@ -105,7 +105,7 @@ function AdminFamilles() {
       if (erreurLecture) throw erreurLecture;
       const { error } = await supabase
         .from("paiements")
-        .update({ statut: "a_jour", montant_paye: paiement?.montant_du ?? null })
+        .update({ statut: "a_jour", montant_paye: paiement?.montant_du ?? 0 })
         .eq("id", id);
       if (error) throw error;
     },

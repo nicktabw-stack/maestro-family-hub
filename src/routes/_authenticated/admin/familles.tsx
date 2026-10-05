@@ -7,7 +7,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
 import { EtatVide } from "@/components/chargement";
 import { EcranAttenteAdmin, useGardeAdmin } from "@/components/garde-admin";
-import { StatutBadge, libellePaiement, tonPaiement } from "@/components/statut-badge";
+import {
+  StatutBadge,
+  estSignale,
+  libellePaiementComplet,
+  tonPaiementComplet,
+} from "@/components/statut-badge";
 import { formatMois, formatMontant } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { geolocationErrorMessage, getCurrentPosition } from "@/lib/geolocation";

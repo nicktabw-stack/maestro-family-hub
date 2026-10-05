@@ -59,6 +59,20 @@ export function libellePaiement(statut: string) {
   );
 }
 
+export function estSignale(p: { statut: string; signale_famille?: boolean | null }) {
+  return !!p.signale_famille && p.statut !== "a_jour" && p.statut !== "annule";
+}
+
+export function libellePaiementComplet(p: { statut: string; signale_famille?: boolean | null }) {
+  if (p.statut === "a_jour") return "Payé";
+  if (estSignale(p)) return "Paiement signalé - en attente de confirmation";
+  return libellePaiement(p.statut);
+}
+
+export function tonPaiementComplet(p: { statut: string; signale_famille?: boolean | null }) {
+  return estSignale(p) ? ("info" as const) : tonPaiement(p.statut);
+}
+
 export function libelleCours(statut: string) {
   return (
     { planifie: "Planifié", effectue: "Effectué", annule: "Annulé", remplace: "Remplacé" }[

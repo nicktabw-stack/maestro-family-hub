@@ -37,7 +37,7 @@ function AdminFamilles() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("familles")
-        .select("*, enfants(id, prenom, nom, niveau, actif), paiements(id, mois, statut, montant_paye, montant_du)")
+        .select("*, enfants(id, prenom, nom, niveau, actif), paiements(id, mois, statut, montant_paye, montant_du, signale_famille)")
         .order("nom");
       if (error) throw error;
       return data ?? [];
@@ -480,6 +480,7 @@ type PaiementFamille = {
   statut: string;
   montant_paye: number | string | null;
   montant_du: number | string | null;
+  signale_famille?: boolean | null;
 };
 
 function SectionPaiements({
@@ -501,7 +502,7 @@ function SectionPaiements({
         {paiements.map((p) => (
           <li
             key={p.id}
-            className="flex items-center justify-between gap-2 rounded-xl border border-border p-3"
+            className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border p-3"
           >
             <div className="min-w-0">
               <p className="text-sm font-semibold capitalize">{formatMois(p.mois)}</p>
@@ -510,8 +511,8 @@ function SectionPaiements({
                 {formatMontant(Number(p.montant_du ?? 0))}
               </p>
             </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <StatutBadge ton={tonPaiement(p.statut)}>{libellePaiement(p.statut)}</StatutBadge>
+            <div className="flex flex-wrap items-center gap-2">
+              <StatutBadge ton={tonPaiementComplet(p)}>{libellePaiementComplet(p)}</StatutBadge>
               {p.statut !== "a_jour" && p.statut !== "annule" ? (
                 <button
                   disabled={enCours}
@@ -519,7 +520,7 @@ function SectionPaiements({
                   className="flex items-center gap-1 rounded-xl border border-primary px-2.5 py-1.5 text-xs font-semibold text-primary disabled:opacity-60"
                 >
                   <Check className="h-3.5 w-3.5" />
-                  Marquer comme payé
+                  {estSignale(p) ? "Confirmer la réception" : "Marquer comme payé"}
                 </button>
               ) : null}
             </div>

@@ -327,8 +327,10 @@ export type Database = {
           adresse: string | null
           created_at: string
           id: string
+          jour_echeance: number | null
           latitude: number | null
           longitude: number | null
+          montant_mensuel: number
           nom: string
           notes_admin: string | null
           quartier: string | null
@@ -341,8 +343,10 @@ export type Database = {
           adresse?: string | null
           created_at?: string
           id?: string
+          jour_echeance?: number | null
           latitude?: number | null
           longitude?: number | null
+          montant_mensuel?: number
           nom?: string
           notes_admin?: string | null
           quartier?: string | null
@@ -355,8 +359,10 @@ export type Database = {
           adresse?: string | null
           created_at?: string
           id?: string
+          jour_echeance?: number | null
           latitude?: number | null
           longitude?: number | null
+          montant_mensuel?: number
           nom?: string
           notes_admin?: string | null
           quartier?: string | null

@@ -100,6 +100,35 @@ function AdminFamilles() {
       }),
   });
 
+  const [tarifMessage, setTarifMessage] = useState<
+    { id: string; type: "succes" | "erreur"; texte: string } | null
+  >(null);
+  const enregistrerTarif = useMutation({
+    mutationFn: async (v: { id: string; montant: number; jour: number | null }) => {
+      const { data, error } = await supabase
+        .from("familles")
+        .update({ montant_mensuel: v.montant, jour_echeance: v.jour })
+        .eq("id", v.id)
+        .select("id")
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) throw new Error("non-enregistre");
+      const { error: e2 } = await supabase
+        .from("paiements")
+        .update({ montant_du: v.montant })
+        .eq("famille_id", v.id)
+        .in("statut", ["en_retard", "partiel"]);
+      if (e2) throw e2;
+    },
+    onMutate: () => setTarifMessage(null),
+    onSuccess: (_d, v) => {
+      setTarifMessage({ id: v.id, type: "succes", texte: "Montant et échéance enregistrés." });
+      queryClient.invalidateQueries({ queryKey: ["admin-familles"] });
+    },
+    onError: (_e, v) =>
+      setTarifMessage({ id: v.id, type: "erreur", texte: "Enregistrement impossible. Réessayez." }),
+  });
+
   const marquerPaye = useMutation({
     mutationFn: async ({ id }: { id: string }) => {
       const { data: paiement, error: erreurLecture } = await supabase
@@ -275,6 +304,16 @@ function AdminFamilles() {
                       enCours={enregistrerGps.isPending}
                       onEnregistrer={(latitude, longitude) =>
                         enregistrerGps.mutate({ id: f.id, latitude, longitude })
+                      }
+                    />
+
+                    <FormulaireTarif
+                      montant={Number((f as { montant_mensuel?: number | null }).montant_mensuel ?? 0)}
+                      jour={(f as { jour_echeance?: number | null }).jour_echeance ?? null}
+                      enCours={enregistrerTarif.isPending}
+                      message={tarifMessage?.id === f.id ? tarifMessage : null}
+                      onEnregistrer={(montant, jour) =>
+                        enregistrerTarif.mutate({ id: f.id, montant, jour })
                       }
                     />
 

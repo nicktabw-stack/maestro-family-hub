@@ -8,6 +8,13 @@
       "when": 1789291102216,
       "tag": "0000_confirmation_cours_famille",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791158766171,
+      "tag": "0001_signalement_paiement",
+      "breakpoints": true
     }
   ]
 }

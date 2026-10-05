@@ -431,6 +431,8 @@ export type Database = {
           montant_du: number
           montant_paye: number
           reference_transaction: string | null
+          signale_at: string | null
+          signale_famille: boolean
           statut: Database["public"]["Enums"]["paiement_statut"]
           updated_at: string
         }
@@ -444,6 +446,8 @@ export type Database = {
           montant_du?: number
           montant_paye?: number
           reference_transaction?: string | null
+          signale_at?: string | null
+          signale_famille?: boolean
           statut?: Database["public"]["Enums"]["paiement_statut"]
           updated_at?: string
         }
@@ -457,6 +461,8 @@ export type Database = {
           montant_du?: number
           montant_paye?: number
           reference_transaction?: string | null
+          signale_at?: string | null
+          signale_famille?: boolean
           statut?: Database["public"]["Enums"]["paiement_statut"]
           updated_at?: string
         }
@@ -554,6 +560,7 @@ export type Database = {
         }
         Returns: string
       }
+      signaler_paiement: { Args: never; Returns: string }
       terminer_cours: { Args: { _cours_id: string }; Returns: undefined }
     }
     Enums: {

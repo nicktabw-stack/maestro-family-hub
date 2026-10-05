@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { MapPin, Smartphone } from "lucide-react";
+import { CheckCircle2, MapPin, Smartphone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useSessionUser } from "@/hooks/use-auth";
 import { AppShell } from "@/components/app-shell";
@@ -10,8 +10,8 @@ import { Chargement, EtatVide } from "@/components/chargement";
 import {
   StatutBadge,
   libelleCours,
-  libellePaiement,
-  tonPaiement,
+  libellePaiementComplet,
+  tonPaiementComplet,
 } from "@/components/statut-badge";
 import { formatJourCourt, formatMois, formatMontant } from "@/lib/format";
 import { geolocationErrorMessage, getCurrentPosition } from "@/lib/geolocation";
@@ -145,6 +145,30 @@ function EspaceFamille() {
     onMutate: () => setMessagePosition(null),
   });
 
+  const [waveOuvert, setWaveOuvert] = useState(false);
+  const [messagePaiement, setMessagePaiement] = useState<
+    { type: "succes" | "erreur"; texte: string } | null
+  >(null);
+  const signaler = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("signaler_paiement");
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setWaveOuvert(false);
+      setMessagePaiement({
+        type: "succes",
+        texte: "Paiement signalé. La structure va vérifier la réception et confirmer.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["paiements-famille", famille?.id] });
+    },
+    onError: () =>
+      setMessagePaiement({
+        type: "erreur",
+        texte: "Le signalement n'a pas pu être envoyé. Réessayez.",
+      }),
+  });
+
   if (isLoading) return <Chargement />;
 
   const latitude = famille?.latitude ?? null;
@@ -214,24 +238,45 @@ function EspaceFamille() {
           <p className="text-sm font-semibold">
             Après paiement, informez la structure pour confirmation.
           </p>
-          {LIEN_PAIEMENT_WAVE ? (
-            <a
-              href={LIEN_PAIEMENT_WAVE}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground"
+          <a
+            href={LIEN_PAIEMENT_WAVE}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => {
+              setWaveOuvert(true);
+              setMessagePaiement(null);
+            }}
+            className="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground"
+          >
+            <Smartphone className="h-4 w-4" />
+            Payer via Wave
+          </a>
+          {waveOuvert && (
+            <div role="status" className="mt-3 rounded-xl bg-primary/10 p-3">
+              <p className="text-xs font-semibold text-primary">
+                Une fois votre paiement Wave terminé, cliquez ci-dessous pour prévenir la structure.
+              </p>
+              <button
+                disabled={signaler.isPending}
+                onClick={() => signaler.mutate()}
+                className="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-primary bg-card text-sm font-semibold text-primary disabled:opacity-60"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                {signaler.isPending ? "Envoi…" : "J'ai effectué le paiement"}
+              </button>
+            </div>
+          )}
+          {messagePaiement && (
+            <p
+              role={messagePaiement.type === "erreur" ? "alert" : "status"}
+              className={`mt-2 rounded-lg px-3 py-2 text-xs font-semibold ${
+                messagePaiement.type === "erreur"
+                  ? "bg-destructive/10 text-destructive"
+                  : "bg-success/15 text-success"
+              }`}
             >
-              <Smartphone className="h-4 w-4" />
-              Payer via Wave
-            </a>
-          ) : (
-            <button
-              disabled
-              className="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground opacity-60"
-            >
-              <Smartphone className="h-4 w-4" />
-              Payer via Wave
-            </button>
+              {messagePaiement.texte}
+            </p>
           )}
         </section>
         {!paiements || paiements.length === 0 ? (
@@ -249,7 +294,9 @@ function EspaceFamille() {
                     {formatMontant(Number(p.montant_paye))} / {formatMontant(Number(p.montant_du))}
                   </p>
                 </div>
-                <StatutBadge ton={tonPaiement(p.statut)}>{libellePaiement(p.statut)}</StatutBadge>
+                <StatutBadge ton={tonPaiementComplet(p)} className="text-right">
+                  {libellePaiementComplet(p)}
+                </StatutBadge>
               </li>
             ))}
           </ul>

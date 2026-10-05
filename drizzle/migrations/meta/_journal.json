@@ -15,6 +15,13 @@
       "when": 1791158766171,
       "tag": "0001_signalement_paiement",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791186905154,
+      "tag": "0002_famille_montant_echeance",
+      "breakpoints": true
     }
   ]
 }

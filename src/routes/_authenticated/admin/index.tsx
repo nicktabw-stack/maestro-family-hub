@@ -229,7 +229,7 @@ function SyntheseAdmin() {
                     {formatMontant(Number(p.montant_paye))} / {formatMontant(Number(p.montant_du))}
                   </p>
                 </div>
-                <StatutBadge ton={tonPaiement(p.statut)}>{libellePaiement(p.statut)}</StatutBadge>
+                <StatutBadge ton={tonPaiementComplet(p)}>{libellePaiementComplet(p)}</StatutBadge>
               </li>
             ))}
           </ul>

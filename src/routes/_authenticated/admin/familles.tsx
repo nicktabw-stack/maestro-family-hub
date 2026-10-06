@@ -574,3 +574,86 @@ function SectionPaiements({
     </div>
   );
 }
+
+function FormulaireTarif({
+  montant,
+  jour,
+  enCours,
+  message,
+  onEnregistrer,
+}: {
+  montant: number;
+  jour: number | null;
+  enCours: boolean;
+  message: { type: "succes" | "erreur"; texte: string } | null;
+  onEnregistrer: (montant: number, jour: number | null) => void;
+}) {
+  const [m, setM] = useState(montant ? String(montant) : "");
+  const [j, setJ] = useState(jour ? String(jour) : "");
+  const [erreur, setErreur] = useState<string | null>(null);
+
+  function valider() {
+    const mn = Number(m.replace(/\s/g, "") || 0);
+    const jn = j ? Number(j) : null;
+    if (!Number.isFinite(mn) || mn < 0) return setErreur("Montant invalide.");
+    if (jn != null && (!Number.isInteger(jn) || jn < 1 || jn > 31))
+      return setErreur("Le jour d'échéance doit être entre 1 et 31.");
+    setErreur(null);
+    onEnregistrer(mn, jn);
+  }
+
+  return (
+    <div className="mt-3 rounded-xl bg-muted/50 p-3">
+      <p className="text-xs font-bold">Tarif et échéance</p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        {montant > 0
+          ? `Montant dû : ${formatMontant(montant)}${jour ? ` — avant le ${jour} du mois` : ""}`
+          : "Aucun montant mensuel défini."}
+      </p>
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <label className="text-xs font-semibold">
+          Montant mensuel (FCFA)
+          <input
+            inputMode="numeric"
+            value={m}
+            onChange={(e) => setM(e.target.value)}
+            placeholder="25000"
+            className={cn(champ, "mt-1")}
+          />
+        </label>
+        <label className="text-xs font-semibold">
+          Jour d'échéance
+          <input
+            type="number"
+            min={1}
+            max={31}
+            value={j}
+            onChange={(e) => setJ(e.target.value)}
+            placeholder="5"
+            className={cn(champ, "mt-1")}
+          />
+        </label>
+      </div>
+      <button
+        disabled={enCours}
+        onClick={valider}
+        className="mt-2 flex h-10 w-full items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground disabled:opacity-60"
+      >
+        {enCours ? "Enregistrement…" : "Enregistrer"}
+      </button>
+      {(erreur || message) && (
+        <p
+          role={erreur || message?.type === "erreur" ? "alert" : "status"}
+          className={cn(
+            "mt-2 rounded-lg px-3 py-2 text-xs font-semibold",
+            erreur || message?.type === "erreur"
+              ? "bg-destructive/10 text-destructive"
+              : "bg-success/15 text-success",
+          )}
+        >
+          {erreur ?? message?.texte}
+        </p>
+      )}
+    </div>
+  );
+}

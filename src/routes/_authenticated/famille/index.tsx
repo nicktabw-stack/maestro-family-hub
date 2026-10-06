@@ -235,6 +235,20 @@ function EspaceFamille() {
 
       <Bloc titre="Paiements">
         <section className="mb-3 rounded-2xl border border-border bg-card p-3">
+          <div className="mb-2 rounded-xl bg-muted/50 p-3">
+            {Number(famille?.montant_mensuel ?? 0) > 0 ? (
+              <p className="text-sm font-bold">
+                Montant dû : {formatMontant(Number(famille?.montant_mensuel))}
+                {famille?.jour_echeance
+                  ? ` — à régler avant le ${famille.jour_echeance} du mois`
+                  : ""}
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Montant mensuel pas encore défini par la structure.
+              </p>
+            )}
+          </div>
           <p className="text-sm font-semibold">
             Après paiement, informez la structure pour confirmation.
           </p>

@@ -16,6 +16,7 @@ import {
 import { formatJourCourt, formatMois, formatMontant } from "@/lib/format";
 import { geolocationErrorMessage, getCurrentPosition } from "@/lib/geolocation";
 import { LIEN_PAIEMENT_WAVE } from "@/lib/paiement";
+import { AssistantPaiement } from "@/components/assistant-paiement";
 
 export const Route = createFileRoute("/_authenticated/famille/")({
   component: EspaceFamille,
@@ -293,6 +294,7 @@ function EspaceFamille() {
             </p>
           )}
         </section>
+        <AssistantPaiement />
         {!paiements || paiements.length === 0 ? (
           <EtatVide texte="Aucun paiement enregistré." />
         ) : (

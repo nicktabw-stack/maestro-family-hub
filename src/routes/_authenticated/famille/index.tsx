@@ -13,7 +13,7 @@ import {
   libellePaiementComplet,
   tonPaiementComplet,
 } from "@/components/statut-badge";
-import { formatJourCourt, formatMois, formatMontant } from "@/lib/format";
+import { formatDateLong, formatJourCourt, formatMois, formatMontant } from "@/lib/format";
 import { geolocationErrorMessage, getCurrentPosition } from "@/lib/geolocation";
 import { LIEN_PAIEMENT_WAVE } from "@/lib/paiement";
 import { AssistantPaiement } from "@/components/assistant-paiement";
@@ -241,7 +241,7 @@ function EspaceFamille() {
               <p className="text-sm font-bold">
                 Montant dû : {formatMontant(Number(famille?.montant_mensuel))}
                 {famille?.jour_echeance
-                  ? ` — à régler avant le ${famille.jour_echeance} du mois`
+                  ? ` — à régler le ${famille.jour_echeance} du mois`
                   : ""}
               </p>
             ) : (
@@ -305,9 +305,15 @@ function EspaceFamille() {
                 className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-3"
               >
                 <div>
-                  <p className="text-sm font-semibold capitalize">{formatMois(p.mois)}</p>
+                  <p className="text-sm font-semibold capitalize">
+                    {p.statut === "a_jour"
+                      ? formatDateLong(p.date_paiement ?? p.updated_at)
+                      : formatMois(p.mois)}
+                  </p>
                   <p className="text-xs text-muted-foreground">
-                    {formatMontant(Number(p.montant_paye))} / {formatMontant(Number(p.montant_du))}
+                    {p.statut === "a_jour"
+                      ? formatMontant(Number(p.montant_paye))
+                      : `${formatMontant(Number(p.montant_paye))} / ${formatMontant(Number(p.montant_du))}`}
                   </p>
                 </div>
                 <StatutBadge ton={tonPaiementComplet(p)} className="text-right">

@@ -3,6 +3,12 @@ export function formatMontant(valeur: number | null | undefined) {
   return `${n.toLocaleString("fr-FR", { maximumFractionDigits: 0 })} FCFA`;
 }
 
+export function formatDate(value: string | null | undefined) {
+  if (!value) return "—";
+  const d = new Date(value);
+  return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
+}
+
 export function formatDateLong(value: string | null | undefined) {
   if (!value) return "—";
   const d = new Date(value);

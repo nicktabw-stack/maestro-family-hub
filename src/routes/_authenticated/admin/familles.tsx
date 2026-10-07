@@ -13,7 +13,7 @@ import {
   libellePaiementComplet,
   tonPaiementComplet,
 } from "@/components/statut-badge";
-import { formatMois, formatMontant } from "@/lib/format";
+import { formatDateLong, formatMois, formatMontant } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { geolocationErrorMessage, getCurrentPosition } from "@/lib/geolocation";
 
@@ -42,7 +42,7 @@ function AdminFamilles() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("familles")
-        .select("*, enfants(id, prenom, nom, niveau, actif), paiements(id, mois, statut, montant_paye, montant_du, signale_famille)")
+        .select("*, enfants(id, prenom, nom, niveau, actif), paiements(id, mois, statut, montant_paye, montant_du, signale_famille, date_paiement, updated_at)")
         .order("nom");
       if (error) throw error;
       return data ?? [];
@@ -139,7 +139,11 @@ function AdminFamilles() {
       if (erreurLecture) throw erreurLecture;
       const { error } = await supabase
         .from("paiements")
-        .update({ statut: "a_jour", montant_paye: paiement?.montant_du ?? 0 })
+        .update({
+          statut: "a_jour",
+          montant_paye: paiement?.montant_du ?? 0,
+          date_paiement: new Date().toISOString().slice(0, 10),
+        })
         .eq("id", id);
       if (error) throw error;
     },
@@ -525,6 +529,8 @@ type PaiementFamille = {
   montant_paye: number | string | null;
   montant_du: number | string | null;
   signale_famille?: boolean | null;
+  date_paiement?: string | null;
+  updated_at?: string | null;
 };
 
 function SectionPaiements({
@@ -549,10 +555,15 @@ function SectionPaiements({
             className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border p-3"
           >
             <div className="min-w-0">
-              <p className="text-sm font-semibold capitalize">{formatMois(p.mois)}</p>
+              <p className="text-sm font-semibold capitalize">
+                {p.statut === "a_jour"
+                  ? formatDateLong(p.date_paiement ?? p.updated_at)
+                  : formatMois(p.mois)}
+              </p>
               <p className="text-xs text-muted-foreground">
-                {formatMontant(Number(p.montant_paye ?? 0))} /{" "}
-                {formatMontant(Number(p.montant_du ?? 0))}
+                {p.statut === "a_jour"
+                  ? formatMontant(Number(p.montant_paye ?? 0))
+                  : `${formatMontant(Number(p.montant_paye ?? 0))} / ${formatMontant(Number(p.montant_du ?? 0))}`}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">

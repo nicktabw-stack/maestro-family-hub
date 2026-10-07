@@ -9,6 +9,12 @@ export function formatDate(value: string | null | undefined) {
   return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
 }
 
+export function formatDateLong(value: string | null | undefined) {
+  if (!value) return "—";
+  const d = new Date(value);
+  return d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+}
+
 export function formatJourCourt(value: string) {
   const d = new Date(value);
   return d.toLocaleDateString("fr-FR", { weekday: "short", day: "2-digit", month: "2-digit" });

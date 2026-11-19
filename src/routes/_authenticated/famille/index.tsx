@@ -15,10 +15,18 @@ import {
 } from "@/components/statut-badge";
 import { formatDateLong, formatJourCourt, formatMois, formatMontant } from "@/lib/format";
 import { geolocationErrorMessage, getCurrentPosition } from "@/lib/geolocation";
-import { LIEN_PAIEMENT_WAVE } from "@/lib/paiement";
+import { LIEN_PAIEMENT_WAVE, ACTUALISATION_PAIEMENTS_MS, montantPaiementConfirme } from "@/lib/paiement";
 import { AssistantPaiement } from "@/components/assistant-paiement";
 
 export const Route = createFileRoute("/_authenticated/famille/")({
+  head: () => ({ meta: [
+    { title: "MaîtreDom — Mon espace famille" },
+    { name: "description", content: "Mensualité, échéance, historique des paiements et suivi des enfants de votre famille." },
+    { property: "og:title", content: "MaîtreDom — Mon espace famille" },
+    { property: "og:description", content: "Paiements et cours de votre famille." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: EspaceFamille,
 });
 
@@ -57,6 +65,7 @@ function EspaceFamille() {
   const { data: paiements } = useQuery({
     queryKey: ["paiements-famille", famille?.id],
     enabled: !!famille?.id,
+    refetchInterval: ACTUALISATION_PAIEMENTS_MS,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("paiements")
@@ -312,7 +321,7 @@ function EspaceFamille() {
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {p.statut === "a_jour"
-                      ? formatMontant(Number(p.montant_paye))
+                      ? formatMontant(montantPaiementConfirme(p, Number(famille?.montant_mensuel ?? 0)))
                       : `${formatMontant(Number(p.montant_paye))} / ${formatMontant(Number(p.montant_du))}`}
                   </p>
                 </div>

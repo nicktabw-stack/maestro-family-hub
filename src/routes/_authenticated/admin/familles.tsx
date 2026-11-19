@@ -16,8 +16,18 @@ import {
 import { formatDateLong, formatMois, formatMontant } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { geolocationErrorMessage, getCurrentPosition } from "@/lib/geolocation";
+import { ACTUALISATION_PAIEMENTS_MS, montantPaiementConfirme } from "@/lib/paiement";
+import { confirmerReceptionPaiement } from "@/lib/paiement-actions";
 
 export const Route = createFileRoute("/_authenticated/admin/familles")({
+  head: () => ({ meta: [
+    { title: "MaîtreDom — Familles et paiements" },
+    { name: "description", content: "Fiches familles, mensualités, échéances et confirmations des paiements." },
+    { property: "og:title", content: "MaîtreDom — Familles et paiements" },
+    { property: "og:description", content: "Suivi des familles et confirmation des réceptions de paiement." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: AdminFamilles,
 });
 
@@ -39,6 +49,7 @@ function AdminFamilles() {
   const { data: familles } = useQuery({
     queryKey: ["admin-familles"],
     enabled: pret,
+    refetchInterval: ACTUALISATION_PAIEMENTS_MS,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("familles")
@@ -129,34 +140,18 @@ function AdminFamilles() {
       setTarifMessage({ id: v.id, type: "erreur", texte: "Enregistrement impossible. Réessayez." }),
   });
 
+  const [messageConfirmation, setMessageConfirmation] = useState<string | null>(null);
   const marquerPaye = useMutation({
-    mutationFn: async ({ id }: { id: string }) => {
-      const { data: paiement, error: erreurLecture } = await supabase
-        .from("paiements")
-        .select("montant_du")
-        .eq("id", id)
-        .maybeSingle();
-      if (erreurLecture) throw erreurLecture;
-      const { error } = await supabase
-        .from("paiements")
-        .update({
-          statut: "a_jour",
-          montant_paye: paiement?.montant_du ?? 0,
-          date_paiement: new Date().toISOString().slice(0, 10),
-        })
-        .eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: ({ id }: { id: string }) => confirmerReceptionPaiement(id),
+    onMutate: () => setMessageConfirmation(null),
     onSuccess: () => {
       toast.success("Paiement confirmé", {
         description: "La famille est désormais à jour pour ce mois.",
       });
       queryClient.invalidateQueries({ queryKey: ["admin-familles"] });
+      queryClient.invalidateQueries({ queryKey: ["synthese-admin"] });
     },
-    onError: () =>
-      toast.error("Confirmation impossible", {
-        description: "Le paiement n’a pas été mis à jour. Réessayez.",
-      }),
+    onError: (error) => setMessageConfirmation(error instanceof Error ? error.message : "La confirmation a échoué. Réessayez."),
   });
 
   const ajouterEnfant = useMutation({
@@ -323,9 +318,11 @@ function AdminFamilles() {
 
                     <SectionPaiements
                       paiements={(f as { paiements?: PaiementFamille[] }).paiements ?? []}
+                      mensualite={Number(f.montant_mensuel)}
                       enCours={marquerPaye.isPending}
                       onMarquer={(id) => marquerPaye.mutate({ id })}
                     />
+                    {messageConfirmation && <p role="alert" className="mt-2 text-xs text-destructive">{messageConfirmation}</p>}
 
                     <FormulaireEnfant
                       enCours={ajouterEnfant.isPending}
@@ -535,10 +532,12 @@ type PaiementFamille = {
 
 function SectionPaiements({
   paiements,
+  mensualite,
   enCours,
   onMarquer,
 }: {
   paiements: PaiementFamille[];
+  mensualite: number;
   enCours: boolean;
   onMarquer: (id: string) => void;
 }) {
@@ -562,7 +561,7 @@ function SectionPaiements({
               </p>
               <p className="text-xs text-muted-foreground">
                 {p.statut === "a_jour"
-                  ? formatMontant(Number(p.montant_paye ?? 0))
+                  ? formatMontant(montantPaiementConfirme(p, mensualite))
                   : `${formatMontant(Number(p.montant_paye ?? 0))} / ${formatMontant(Number(p.montant_du ?? 0))}`}
               </p>
             </div>
@@ -618,7 +617,7 @@ function FormulaireTarif({
       <p className="text-xs font-bold">Tarif et échéance</p>
       <p className="mt-1 text-xs text-muted-foreground">
         {montant > 0
-          ? `Montant dû : ${formatMontant(montant)}${jour ? ` — avant le ${jour} du mois` : ""}`
+          ? `Montant dû : ${formatMontant(montant)}${jour ? ` — le ${jour} du mois` : ""}`
           : "Aucun montant mensuel défini."}
       </p>
       <div className="mt-2 grid grid-cols-2 gap-2">

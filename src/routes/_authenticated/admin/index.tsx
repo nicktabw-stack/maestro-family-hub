@@ -5,6 +5,8 @@ import { AlertTriangle, CalendarDays, Check, FileCheck2, Users } from "lucide-re
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
 import { EtatVide } from "@/components/chargement";
+import { ACTUALISATION_PAIEMENTS_MS } from "@/lib/paiement";
+import { confirmerReceptionPaiement } from "@/lib/paiement-actions";
 import { EcranAttenteAdmin, useGardeAdmin } from "@/components/garde-admin";
 import {
   StatutBadge,
@@ -21,6 +23,14 @@ import {
 } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
+  head: () => ({ meta: [
+    { title: "MaîtreDom — Tableau de bord de la structure" },
+    { name: "description", content: "Synthèse des familles, paiements signalés, cours et alertes de la structure." },
+    { property: "og:title", content: "MaîtreDom — Tableau de bord de la structure" },
+    { property: "og:description", content: "Synthèse des paiements à vérifier et du suivi des cours." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: SyntheseAdmin,
 });
 
@@ -32,6 +42,7 @@ function SyntheseAdmin() {
   const { data } = useQuery({
     queryKey: ["synthese-admin", mois, debut],
     enabled: pret,
+    refetchInterval: ACTUALISATION_PAIEMENTS_MS,
     queryFn: async () => {
       const [familles, paiements, cours, dossiers, alertes, signales] = await Promise.all([
         supabase.from("familles").select("id, nom").eq("actif", true),
@@ -70,21 +81,12 @@ function SyntheseAdmin() {
   const queryClient = useQueryClient();
   const [erreurConfirmation, setErreurConfirmation] = useState<string | null>(null);
   const confirmer = useMutation({
-    mutationFn: async (id: string) => {
-      const { data: p, error: e1 } = await supabase
-        .from("paiements")
-        .select("montant_du")
-        .eq("id", id)
-        .maybeSingle();
-      if (e1) throw e1;
-      const { error } = await supabase
-        .from("paiements")
-        .update({ statut: "a_jour", montant_paye: p?.montant_du ?? 0, date_paiement: new Date().toISOString().slice(0, 10) })
-        .eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: confirmerReceptionPaiement,
     onMutate: () => setErreurConfirmation(null),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["synthese-admin"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["synthese-admin"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-familles"] });
+    },
     onError: () => setErreurConfirmation("La confirmation a échoué. Réessayez."),
   });
 

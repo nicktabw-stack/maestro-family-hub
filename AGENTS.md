@@ -11,3 +11,4 @@
 
 - Payment screens refresh active queries every three seconds so changes from another account appear without navigation.
 - Keep payment amount rules in `src/lib/paiement.ts` and browser confirmation writes in `paiement-actions.ts` so both admin views preserve historical amounts and reject zero-value confirmations consistently.
+- Normalize payment assistant data with the shared payment rules and include signal flags and exact due dates so explanations match the account screens.

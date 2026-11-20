@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import { strictEqual } from "node:assert";
-import { montantPaiementConfirme, montantReception } from "./paiement";
+import { montantPaiementConfirme, montantReception, donneesPaiementAssistant } from "./paiement";
 import { estSignale } from "../components/statut-badge";
 
 describe("montants confirmés", () => {
@@ -19,6 +19,16 @@ describe("montants confirmés", () => {
 });
 
 describe("signalement", () => {
+  it("transmet à l'assistant le signalement en attente plutôt qu'un simple retard", () => {
+    strictEqual(donneesPaiementAssistant({ statut: "en_retard", signale_famille: true, montant_paye: 0, montant_du: 15000 }, 15000).statut, "signale");
+  });
+  it("transmet à l'assistant le montant confirmé de 15 000 FCFA sans écrire en base", () => {
+    const p = { statut: "a_jour", signale_famille: true, montant_paye: 0, montant_du: 15000 };
+    const resultat = donneesPaiementAssistant(p, 15000);
+    strictEqual(resultat.montant_paye, 15000);
+    strictEqual(resultat.statut, "a_jour");
+    strictEqual(p.montant_paye, 0);
+  });
   it("est en attente de réception lorsque la famille signale un paiement non confirmé", () => {
     strictEqual(estSignale({ statut: "en_retard", signale_famille: true }), true);
   });

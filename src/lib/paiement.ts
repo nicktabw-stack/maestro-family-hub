@@ -20,3 +20,18 @@ export function montantPaiementConfirme(paiement: MontantsPaiement, mensualite: 
 export function montantReception(paiement: MontantsPaiement, mensualite: number) {
   return Number(paiement.montant_du) > 0 ? Number(paiement.montant_du) : mensualite;
 }
+
+export function donneesPaiementAssistant<T extends MontantsPaiement & {
+  statut: string;
+  signale_famille?: boolean | null;
+}>(paiement: T, mensualite: number) {
+  return {
+    ...paiement,
+    statut: paiement.statut === "a_jour" || paiement.statut === "annule"
+      ? paiement.statut
+      : paiement.signale_famille ? "signale" : paiement.statut,
+    montant_paye: paiement.statut === "a_jour"
+      ? montantPaiementConfirme(paiement, mensualite)
+      : paiement.montant_paye,
+  };
+}

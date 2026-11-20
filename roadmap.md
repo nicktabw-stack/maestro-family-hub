@@ -4,3 +4,5 @@
 - [x] Corriger le montant nul des paiements confirmés sans remplacer un montant positif historique.
 - [x] Remplacer le dernier texte « avant le » côté admin.
 - [x] Tester les règles et vérifier le parcours famille → admin, puis supprimer les données d’essai.
+- [x] Vérifier l’assistant, la modification du tarif et la fonction de signalement ; préserver les paiements déjà clôturés.
+- [x] Tester les corrections complémentaires et retirer uniquement les essais créés.

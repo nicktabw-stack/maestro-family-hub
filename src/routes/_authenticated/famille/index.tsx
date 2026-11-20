@@ -37,6 +37,7 @@ function EspaceFamille() {
   const { data: famille, isLoading } = useQuery({
     queryKey: ["famille", user?.id],
     enabled: !!user?.id,
+    refetchInterval: ACTUALISATION_PAIEMENTS_MS,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("familles")
@@ -172,10 +173,12 @@ function EspaceFamille() {
       });
       queryClient.invalidateQueries({ queryKey: ["paiements-famille", famille?.id] });
     },
-    onError: () =>
+    onError: (error) =>
       setMessagePaiement({
         type: "erreur",
-        texte: "Le signalement n'a pas pu être envoyé. Réessayez.",
+        texte: error?.message === "Le paiement de ce mois est déjà confirmé ou annulé. Contactez la structure pour un autre versement."
+          ? error.message
+          : "Le signalement n'a pas pu être envoyé. Réessayez.",
       }),
   });
 

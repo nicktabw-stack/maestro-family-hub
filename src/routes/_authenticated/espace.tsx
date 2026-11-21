@@ -4,6 +4,14 @@ import { useRole, useSessionUser } from "@/hooks/use-auth";
 import { Chargement } from "@/components/chargement";
 
 export const Route = createFileRoute("/_authenticated/espace")({
+  head: () => ({ meta: [
+    { title: "MaîtreDom — Accès à mon compte" },
+    { name: "description", content: "Retrouvez votre espace famille, maître ou structure." },
+    { property: "og:title", content: "MaîtreDom — Accès à mon compte" },
+    { property: "og:description", content: "Retrouvez votre espace famille, maître ou structure." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: Espace,
 });
 

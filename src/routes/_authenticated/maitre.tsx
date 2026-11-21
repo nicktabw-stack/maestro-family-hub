@@ -11,6 +11,14 @@ import { StatutBadge, libelleCours, libelleMaitre, tonMaitre } from "@/component
 import { formatJourCourt } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/maitre")({
+  head: () => ({ meta: [
+    { title: "MaîtreDom — Mon espace maître" },
+    { name: "description", content: "Votre dossier, vos élèves et vos heures de cours." },
+    { property: "og:title", content: "MaîtreDom — Mon espace maître" },
+    { property: "og:description", content: "Votre dossier, vos élèves et vos heures de cours." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: EspaceMaitre,
 });
 

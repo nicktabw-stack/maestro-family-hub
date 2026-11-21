@@ -4,6 +4,12 @@ import { GraduationCap, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/hooks/use-auth";
+import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { Button } from "@/components/ui/button";
+import { AppPreferences, deviceStorageKey } from "@/components/app-preferences";
+import { removePushDevice } from "@/lib/push.functions";
+import { disablePush } from "@/lib/push-client";
 
 type NavItem = { to: string; label: string };
 
@@ -38,8 +44,24 @@ export function AppShell({
   const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const items = NAV[role];
+  const removeDevice = useServerFn(removePushDevice);
+  const [logoutError, setLogoutError] = useState("");
 
   async function seDeconnecter() {
+    setLogoutError("");
+    try {
+      const { data } = await supabase.auth.getSession();
+      const id = data.session?.user.id;
+      const token = id ? localStorage.getItem(deviceStorageKey(id)) : null;
+      if (id && token) {
+        await removeDevice({ data: { token } });
+        await disablePush();
+        localStorage.removeItem(deviceStorageKey(id));
+      }
+    } catch {
+      setLogoutError("Impossible de retirer les notifications de cet appareil. Réessayez la déconnexion.");
+      return;
+    }
     await queryClient.cancelQueries();
     queryClient.clear();
     await supabase.auth.signOut();
@@ -59,17 +81,23 @@ export function AppShell({
               <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
             ) : null}
           </div>
-          <button
+          <AppPreferences />
+          <Button
+            size="icon"
+            variant="outline"
             onClick={seDeconnecter}
             aria-label="Se déconnecter"
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-border text-muted-foreground transition-colors hover:bg-muted"
           >
             <LogOut className="h-4 w-4" />
-          </button>
+          </Button>
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-4xl px-4 py-4">{children}</main>
+      <main className="mx-auto w-full max-w-4xl px-4 py-4">
+        {logoutError && <p role="alert" className="mb-3 text-sm text-destructive">{logoutError}</p>}
+        {children}
+      </main>
 
       {items.length > 1 ? (
         <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-card">

@@ -11,6 +11,14 @@ import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/admin/affectations")({
+  head: () => ({ meta: [
+    { title: "MaîtreDom — Affectations et remplacements" },
+    { name: "description", content: "Affectation des maîtres aux enfants et historique des remplacements." },
+    { property: "og:title", content: "MaîtreDom — Affectations et remplacements" },
+    { property: "og:description", content: "Affectation des maîtres aux enfants et historique des remplacements." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: AdminAffectations,
 });
 

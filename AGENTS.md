@@ -12,3 +12,6 @@
 - Payment screens refresh active queries every three seconds so changes from another account appear without navigation.
 - Keep payment amount rules in `src/lib/paiement.ts` and browser confirmation writes in `paiement-actions.ts` so both admin views preserve historical amounts and reject zero-value confirmations consistently.
 - Normalize payment assistant data with the shared payment rules and include signal flags and exact due dates so explanations match the account screens.
+- Home-screen installation uses a manifest only; the dedicated Firebase messaging worker never caches the app shell, avoiding stale previews.
+- Push tokens are owner-scoped in push_devices; authenticated server functions register/remove tokens and send self-tests through the Firebase connector. Remove the device on sign-out to prevent cross-account notifications.
+- Browser-only Firebase imports stay dynamic; notification permission is requested only by an explicit top-level user action.

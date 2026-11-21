@@ -1,7 +1,8 @@
 # Corrections paiements
-- [ ] Ajouter l’installation sur l’écran d’accueil, sans mode hors connexion.
-- [ ] Connecter Firebase, enregistrer les appareils et ajouter une notification de test.
-- [ ] Vérifier les autorisations et les affichages mobile/ordinateur.
+- [x] Ajouter l’installation sur l’écran d’accueil, sans mode hors connexion.
+- [x] Connecter Firebase, enregistrer les appareils et ajouter une notification de test.
+- [x] Vérifier les autorisations, le stockage sécurisé et les affichages mobile/ordinateur.
+- [ ] Vérifier la réception réelle sur un téléphone : navigateur de test refusant l’abonnement push ; publier puis activer et tester depuis l’application ouverte seule.
 - [x] Vérifier les trois problèmes dans l’application.
 - [x] Actualiser automatiquement les paiements côté admin et famille.
 - [x] Corriger le montant nul des paiements confirmés sans remplacer un montant positif historique.

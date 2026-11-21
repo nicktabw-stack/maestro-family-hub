@@ -1,10 +1,10 @@
 import { messagingSenderId, type PushStatus } from './push-rules';
 
-const appId = import.meta.env.VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_APP_ID;
-const vapidKey = import.meta.env.VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_VAPID_KEY;
+const appId = import.meta.env['VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_APP_ID'];
+const vapidKey = import.meta.env['VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_VAPID_KEY'];
 const config = {
-  apiKey: import.meta.env.VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_WEB_API_KEY,
-  projectId: import.meta.env.VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_PROJECT_ID,
+  apiKey: import.meta.env['VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_WEB_API_KEY'],
+  projectId: import.meta.env['VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_PROJECT_ID'],
   appId,
   messagingSenderId: messagingSenderId(appId),
 };
@@ -24,6 +24,21 @@ export async function enablePush(): Promise<{ status: PushStatus; token?: string
   if (permission !== 'granted') return { status: 'denied' };
   const query = new URLSearchParams(config).toString();
   const registration = await navigator.serviceWorker.register(`/firebase-messaging-sw.js?${query}`);
+  if (registration.active?.state !== 'activated') {
+    await new Promise<void>((resolve, reject) => {
+      const worker = registration.installing ?? registration.waiting ?? registration.active;
+      if (!worker) { reject(new Error('Le service de notifications ne démarre pas. Réessayez.')); return; }
+      const timer = setTimeout(() => { worker.removeEventListener('statechange', changed); reject(new Error('Le démarrage des notifications prend trop de temps. Réessayez.')); }, 15000);
+      const changed = () => {
+        if (worker.state === 'activated' || worker.state === 'redundant') {
+          clearTimeout(timer); worker.removeEventListener('statechange', changed);
+          if (worker.state === 'activated') resolve(); else reject(new Error('Le service de notifications est indisponible. Réessayez.'));
+        }
+      };
+      worker.addEventListener('statechange', changed);
+      changed();
+    });
+  }
   const token = await getToken(await messagingClient(), { vapidKey, serviceWorkerRegistration: registration });
   return token ? { status: 'registered', token } : { status: 'denied' };
 }

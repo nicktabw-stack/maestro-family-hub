@@ -10,6 +10,14 @@ import { StatutBadge, libelleCours } from "@/components/statut-badge";
 import { formatJourCourt } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin/cours")({
+  head: () => ({ meta: [
+    { title: "MaîtreDom — Historique des cours" },
+    { name: "description", content: "Pointages, horaires et confirmations des cours par enfant." },
+    { property: "og:title", content: "MaîtreDom — Historique des cours" },
+    { property: "og:description", content: "Pointages, horaires et confirmations des cours par enfant." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: HistoriqueCours,
 });
 

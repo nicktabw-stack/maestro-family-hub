@@ -11,6 +11,14 @@ import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/admin/maitres")({
+  head: () => ({ meta: [
+    { title: "MaîtreDom — Dossiers des maîtres" },
+    { name: "description", content: "Validation des dossiers et consultation des documents des maîtres." },
+    { property: "og:title", content: "MaîtreDom — Dossiers des maîtres" },
+    { property: "og:description", content: "Validation des dossiers et consultation des documents des maîtres." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: AdminMaitres,
 });
 

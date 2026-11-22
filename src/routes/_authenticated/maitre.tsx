@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -9,6 +9,8 @@ import { AppShell } from "@/components/app-shell";
 import { Chargement, EtatVide } from "@/components/chargement";
 import { StatutBadge, libelleCours, libelleMaitre, tonMaitre } from "@/components/statut-badge";
 import { formatJourCourt } from "@/lib/format";
+import { useServerFn } from '@tanstack/react-start';
+import { terminerCoursEtNotifier, saisirCoursEtNotifier } from '@/lib/notification-actions.functions';
 
 export const Route = createFileRoute("/_authenticated/maitre")({
   head: () => ({ meta: [
@@ -67,6 +69,10 @@ function EspaceMaitre() {
   const { user } = useSessionUser();
   const { data: profil } = useProfile(user?.id);
   const queryClient = useQueryClient();
+  const terminerServeur = useServerFn(terminerCoursEtNotifier);
+  const manuelServeur = useServerFn(saisirCoursEtNotifier);
+  const [messageCours, setMessageCours] = useState('');
+  const manualRequest = useRef<string | null>(null);
   const [saisieEnfant, setSaisieEnfant] = useState<string | null>(null);
   const [saisie, setSaisie] = useState({
     date: new Date().toISOString().slice(0, 10),
@@ -142,34 +148,28 @@ function EspaceMaitre() {
   });
 
   const terminer = useMutation({
-    mutationFn: async (coursId: string) => {
-      const { error } = await supabase.rpc("terminer_cours", { _cours_id: coursId });
-      if (error) throw error;
-    },
-    onSuccess: () => {
+    mutationFn: (coursId: string) => terminerServeur({ data: { coursId } }),
+    onSuccess: (result) => {
+      setMessageCours(result.notificationFailed ? 'Cours terminé. La notification n’a pas pu être remise ; le cours est disponible à confirmer dans l’espace famille.' : 'Cours terminé. La famille peut le confirmer.');
       toast.success("Cours terminé");
       rafraichir();
     },
-    onError: () => toast.error("Impossible de terminer le cours"),
+    onError: () => setMessageCours('Impossible de terminer le cours. Réessayez.'),
   });
 
   const enregistrerManuel = useMutation({
-    mutationFn: async (enfantId: string) => {
-      const { error } = await supabase.rpc("saisir_cours_manuel", {
-        _enfant_id: enfantId,
-        _date: saisie.date,
-        _debut: saisie.debut,
-        _fin: saisie.fin,
-        ...(saisie.matiere.trim() ? { _matiere: saisie.matiere.trim() } : {}),
-      });
-      if (error) throw error;
+    mutationFn: (enfantId: string) => {
+      manualRequest.current ??= crypto.randomUUID();
+      return manuelServeur({ data: { requestId: manualRequest.current, enfantId, date: saisie.date, debut: saisie.debut, fin: saisie.fin, matiere: saisie.matiere } });
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      setMessageCours(result.notificationFailed ? 'Heures enregistrées. La notification n’a pas pu être remise ; le cours est disponible à confirmer dans l’espace famille.' : 'Heures enregistrées. La famille peut confirmer le cours.');
       toast.success("Heures enregistrées (saisie manuelle)");
       setSaisieEnfant(null);
+      manualRequest.current = null;
       rafraichir();
     },
-    onError: () => toast.error("Enregistrement impossible"),
+    onError: () => setMessageCours('Enregistrement impossible. Réessayez.'),
   });
 
   if (isLoading) return <Chargement />;
@@ -183,6 +183,7 @@ function EspaceMaitre() {
 
   return (
     <AppShell role="maitre" title="Espace maître" subtitle={profil?.full_name ?? undefined}>
+      {messageCours && <p role="status" className="mb-3 text-sm text-foreground">{messageCours}</p>}
       <section className="rounded-2xl border border-border bg-card p-4">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-sm font-bold">Statut du dossier</h2>

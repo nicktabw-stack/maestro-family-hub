@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ import { ACTUALISATION_PAIEMENTS_MS, montantPaiementConfirme } from "@/lib/paiem
 import { confirmerReceptionPaiement } from "@/lib/paiement-actions";
 
 export const Route = createFileRoute("/_authenticated/admin/familles")({
+  validateSearch: (search: Record<string, unknown>) => ({ famille: typeof search['famille'] === 'string' ? search['famille'] : '' }),
   head: () => ({ meta: [
     { title: "MaîtreDom — Familles et paiements" },
     { name: "description", content: "Fiches familles, mensualités, échéances et confirmations des paiements." },
@@ -35,10 +36,12 @@ const champ =
   "h-11 w-full rounded-xl border border-input bg-card px-3 text-sm outline-none focus:border-primary";
 
 function AdminFamilles() {
+  const { famille: familleCible } = Route.useSearch();
   const { pret } = useGardeAdmin();
   const queryClient = useQueryClient();
   const [recherche, setRecherche] = useState("");
-  const [ouverte, setOuverte] = useState<string | null>(null);
+  const [ouverte, setOuverte] = useState<string | null>(familleCible || null);
+  useEffect(() => { if (familleCible) { setOuverte(familleCible); setRecherche(''); } }, [familleCible]);
   const [nouvelleFamille, setNouvelleFamille] = useState({
     nom: "",
     telephone: "",
@@ -150,6 +153,7 @@ function AdminFamilles() {
       });
       queryClient.invalidateQueries({ queryKey: ["admin-familles"] });
       queryClient.invalidateQueries({ queryKey: ["synthese-admin"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-attention'] });
     },
     onError: (error) => setMessageConfirmation(error instanceof Error ? error.message : "La confirmation a échoué. Réessayez."),
   });
@@ -240,7 +244,7 @@ function AdminFamilles() {
                 .enfants ?? [];
             const ouvert = ouverte === f.id;
             return (
-              <article key={f.id} className="rounded-2xl border border-border bg-card">
+              <article key={f.id} id={`famille-${f.id}`} className="rounded-2xl border border-border bg-card">
                 <button
                   onClick={() => setOuverte(ouvert ? null : f.id)}
                   className="flex w-full items-center justify-between gap-3 p-4 text-left"

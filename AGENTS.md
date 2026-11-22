@@ -15,3 +15,6 @@
 - Home-screen installation uses a manifest only; the dedicated Firebase messaging worker never caches the app shell, avoiding stale previews.
 - Push tokens are owner-scoped in push_devices; authenticated server functions register/remove tokens and send self-tests through the Firebase connector. Remove the device on sign-out to prevent cross-account notifications.
 - Browser-only Firebase imports stay dynamic; notification permission is requested only by an explicit top-level user action.
+- Course completion and payment reporting use authenticated server actions; database triggers create unique events and atomic per-device delivery reservations prevent duplicate sends, including concurrent requests.
+- Admin payment alerts and navigation counts share admin-attention query data; stored payment alerts are closed by a payment-state trigger so confirmations from any screen stay consistent.
+- Notification invitation dismissal is keyed to the authenticated sign-in timestamp in sessionStorage, so deferral lasts only for that login session.

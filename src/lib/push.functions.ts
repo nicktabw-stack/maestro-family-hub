@@ -4,6 +4,15 @@ import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 
 const deviceInput = z.object({ token: z.string().min(20).max(4096) });
 
+export const checkPushDevice = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => deviceInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: device, error } = await context.supabase.from('push_devices').select('id').eq('user_id', context.userId).eq('token', data.token).maybeSingle();
+    if (error) throw new Error('Impossible de vérifier les notifications.');
+    return { active: Boolean(device) };
+  });
+
 export const registerPushDevice = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => deviceInput.parse(input))

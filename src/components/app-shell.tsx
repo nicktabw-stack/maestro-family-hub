@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { GraduationCap, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { AppPreferences, deviceStorageKey } from "@/components/app-preferences";
 import { removePushDevice } from "@/lib/push.functions";
 import { disablePush } from "@/lib/push-client";
+import { adminAttentionOptions } from "@/lib/admin-attention";
+import { attentionCount } from "@/lib/push-rules";
 
 type NavItem = { to: string; label: string };
 
@@ -46,6 +48,8 @@ export function AppShell({
   const items = NAV[role];
   const removeDevice = useServerFn(removePushDevice);
   const [logoutError, setLogoutError] = useState("");
+  const { data: attention } = useQuery({ ...adminAttentionOptions, enabled: role === 'admin' });
+  const totalAttention = attentionCount(attention?.paiements.length ?? 0, attention?.dossiers ?? 0);
 
   async function seDeconnecter() {
     setLogoutError("");
@@ -122,7 +126,10 @@ export function AppShell({
                       actif ? "bg-primary" : "bg-transparent",
                     )}
                   />
-                  {item.label}
+                  <span className="relative">
+                    {item.label}
+                    {role === 'admin' && item.to === '/admin' && totalAttention > 0 && <span aria-label={`${totalAttention} éléments à traiter`} className="absolute -right-5 -top-2 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] text-destructive-foreground">{totalAttention}</span>}
+                  </span>
                 </Link>
               );
             })}

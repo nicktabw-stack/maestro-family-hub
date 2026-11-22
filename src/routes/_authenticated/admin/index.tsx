@@ -7,6 +7,8 @@ import { AppShell } from "@/components/app-shell";
 import { EtatVide } from "@/components/chargement";
 import { ACTUALISATION_PAIEMENTS_MS } from "@/lib/paiement";
 import { confirmerReceptionPaiement } from "@/lib/paiement-actions";
+import { adminAttentionOptions } from '@/lib/admin-attention';
+import { Button } from '@/components/ui/button';
 import { EcranAttenteAdmin, useGardeAdmin } from "@/components/garde-admin";
 import {
   StatutBadge,
@@ -38,13 +40,14 @@ function SyntheseAdmin() {
   const { pret } = useGardeAdmin();
   const mois = moisCourant();
   const { debut, fin } = semaineCourante();
+  const { data: attention } = useQuery({ ...adminAttentionOptions, enabled: pret });
 
   const { data } = useQuery({
     queryKey: ["synthese-admin", mois, debut],
     enabled: pret,
     refetchInterval: ACTUALISATION_PAIEMENTS_MS,
     queryFn: async () => {
-      const [familles, paiements, cours, dossiers, alertes, signales] = await Promise.all([
+      const [familles, paiements, cours, dossiers, alertes] = await Promise.all([
         supabase.from("familles").select("id, nom").eq("actif", true),
         supabase.from("paiements").select("*, familles(nom)").eq("mois", mois),
         supabase
@@ -58,14 +61,9 @@ function SyntheseAdmin() {
           .from("alertes")
           .select("*")
           .eq("lue", false)
+          .neq('type', 'Paiement signalé')
           .order("created_at", { ascending: false })
           .limit(5),
-        supabase
-          .from("paiements")
-          .select("*, familles(nom)")
-          .eq("signale_famille", true)
-          .in("statut", ["en_retard", "partiel"])
-          .order("signale_at", { ascending: false }),
       ]);
       return {
         familles: familles.data ?? [],
@@ -73,7 +71,6 @@ function SyntheseAdmin() {
         cours: cours.data ?? [],
         dossiersEnAttente: dossiers.data?.length ?? 0,
         alertes: alertes.data ?? [],
-        signales: signales.data ?? [],
       };
     },
   });
@@ -86,6 +83,7 @@ function SyntheseAdmin() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["synthese-admin"] });
       queryClient.invalidateQueries({ queryKey: ["admin-familles"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-attention'] });
     },
     onError: () => setErreurConfirmation("La confirmation a échoué. Réessayez."),
   });
@@ -93,6 +91,7 @@ function SyntheseAdmin() {
   if (!pret) return <EcranAttenteAdmin />;
 
   const paiements = data?.paiements ?? [];
+  const signales = attention?.paiements ?? [];
   const aJour = paiements.filter((p) => p.statut === "a_jour").length;
   const enRetard = paiements.filter((p) => p.statut === "en_retard" || p.statut === "partiel");
   const sansPaiement = (data?.familles.length ?? 0) - paiements.length;
@@ -132,6 +131,7 @@ function SyntheseAdmin() {
         </Link>
         <Link
           to="/admin/familles"
+          search={{ famille: '' }}
           className="rounded-2xl border border-border bg-card px-3 py-3 text-center text-xs font-semibold"
         >
           Familles
@@ -152,11 +152,11 @@ function SyntheseAdmin() {
 
       <section className="mt-5">
         <h2 className="mb-2 text-sm font-bold">Paiements signalés à vérifier</h2>
-        {!data?.signales.length ? (
+        {!signales.length ? (
           <EtatVide texte="Aucun paiement signalé en attente." />
         ) : (
           <ul className="space-y-2">
-            {data.signales.map((p) => (
+            {signales.map((p) => (
               <li
                 key={p.id}
                 className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-primary/40 bg-primary/5 p-3"
@@ -191,11 +191,16 @@ function SyntheseAdmin() {
 
       <section className="mt-5">
         <h2 className="mb-2 text-sm font-bold">Alertes</h2>
-        {!data?.alertes.length ? (
+        {!data?.alertes.length && !signales.length ? (
           <EtatVide texte="Aucune alerte en cours." />
         ) : (
           <ul className="space-y-2">
-            {data.alertes.map((a) => (
+            {signales.map((p) => <li key={p.id} className="rounded-2xl border border-border bg-card p-3">
+              <p className="text-sm font-semibold">Paiement signalé</p>
+              <p className="text-sm text-muted-foreground">La famille {p.familles?.nom ?? 'Famille'} indique avoir payé {formatMontant(Number(p.montant_du))} via Wave. À vérifier.</p>
+              <Button asChild variant="link" size="sm"><Link to="/admin/familles" search={{ famille: p.famille_id }}>Voir la fiche famille</Link></Button>
+            </li>)}
+            {(data?.alertes ?? []).map((a) => (
               <li
                 key={a.id}
                 className={

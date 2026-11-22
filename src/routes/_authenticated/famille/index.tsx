@@ -17,6 +17,8 @@ import { formatDateLong, formatJourCourt, formatMois, formatMontant } from "@/li
 import { geolocationErrorMessage, getCurrentPosition } from "@/lib/geolocation";
 import { LIEN_PAIEMENT_WAVE, ACTUALISATION_PAIEMENTS_MS, montantPaiementConfirme } from "@/lib/paiement";
 import { AssistantPaiement } from "@/components/assistant-paiement";
+import { useServerFn } from '@tanstack/react-start';
+import { signalerPaiementEtNotifier } from '@/lib/notification-actions.functions';
 
 export const Route = createFileRoute("/_authenticated/famille/")({
   head: () => ({ meta: [
@@ -31,6 +33,7 @@ export const Route = createFileRoute("/_authenticated/famille/")({
 });
 
 function EspaceFamille() {
+  const signalerServeur = useServerFn(signalerPaiementEtNotifier);
   const { user } = useSessionUser();
   const { data: profil } = useProfile(user?.id);
 
@@ -161,15 +164,12 @@ function EspaceFamille() {
     { type: "succes" | "erreur"; texte: string } | null
   >(null);
   const signaler = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.rpc("signaler_paiement");
-      if (error) throw error;
-    },
-    onSuccess: () => {
+    mutationFn: () => signalerServeur(),
+    onSuccess: (result) => {
       setWaveOuvert(false);
       setMessagePaiement({
         type: "succes",
-        texte: "Paiement signalé. La structure va vérifier la réception et confirmer.",
+        texte: result.notificationFailed ? 'Paiement signalé et visible par la structure. La notification n’a pas pu être remise.' : "Paiement signalé. La structure va vérifier la réception et confirmer.",
       });
       queryClient.invalidateQueries({ queryKey: ["paiements-famille", famille?.id] });
     },

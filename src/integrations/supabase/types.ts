@@ -83,6 +83,7 @@ export type Database = {
           lue: boolean
           maitre_id: string | null
           message: string
+          paiement_id: string | null
           severite: string
           type: string
         }
@@ -93,6 +94,7 @@ export type Database = {
           lue?: boolean
           maitre_id?: string | null
           message: string
+          paiement_id?: string | null
           severite?: string
           type: string
         }
@@ -103,6 +105,7 @@ export type Database = {
           lue?: boolean
           maitre_id?: string | null
           message?: string
+          paiement_id?: string | null
           severite?: string
           type?: string
         }
@@ -119,6 +122,13 @@ export type Database = {
             columns: ["maitre_id"]
             isOneToOne: false
             referencedRelation: "maitres"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alertes_paiement_id_fkey"
+            columns: ["paiement_id"]
+            isOneToOne: false
+            referencedRelation: "paiements"
             referencedColumns: ["id"]
           },
         ]
@@ -426,6 +436,32 @@ export type Database = {
         }
         Relationships: []
       }
+      manual_course_requests: {
+        Row: {
+          cours_id: string
+          request_id: string
+          user_id: string
+        }
+        Insert: {
+          cours_id: string
+          request_id: string
+          user_id: string
+        }
+        Update: {
+          cours_id?: string
+          request_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_course_requests_cours_id_fkey"
+            columns: ["cours_id"]
+            isOneToOne: false
+            referencedRelation: "cours"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       paiements: {
         Row: {
           created_at: string
@@ -509,6 +545,38 @@ export type Database = {
         }
         Relationships: []
       }
+      push_deliveries: {
+        Row: {
+          created_at: string
+          device_id: string
+          event_id: string
+          id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          device_id: string
+          event_id: string
+          id?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          event_id?: string
+          id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_deliveries_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "push_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       push_devices: {
         Row: {
           created_at: string
@@ -530,6 +598,39 @@ export type Database = {
           token?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      push_events: {
+        Row: {
+          actor_id: string | null
+          body: string
+          created_at: string
+          id: string
+          kind: string
+          path: string
+          recipient_ids: string[]
+          resource_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          kind: string
+          path: string
+          recipient_ids?: string[]
+          resource_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          path?: string
+          recipient_ids?: string[]
+          resource_id?: string
         }
         Relationships: []
       }
@@ -587,6 +688,17 @@ export type Database = {
           _enfant_id: string
           _fin: string
           _matiere?: string
+        }
+        Returns: string
+      }
+      saisir_cours_manuel_unique: {
+        Args: {
+          _date: string
+          _debut: string
+          _enfant_id: string
+          _fin: string
+          _matiere?: string
+          _request_id: string
         }
         Returns: string
       }

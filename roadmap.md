@@ -1,4 +1,8 @@
 # Corrections paiements
+- [ ] Afficher l’invitation aux notifications à chaque connexion, avec report par session et installation iPhone.
+- [ ] Envoyer côté serveur les notifications de fin de cours et de paiement signalé, sans doublons.
+- [ ] Nettoyer les alertes traitées et synchroniser les listes et la pastille admin.
+- [ ] Tester les règles, les parcours et les liens des notifications.
 - [x] Ajouter l’installation sur l’écran d’accueil, sans mode hors connexion.
 - [x] Connecter Firebase, enregistrer les appareils et ajouter une notification de test.
 - [x] Vérifier les autorisations, le stockage sécurisé et les affichages mobile/ordinateur.

@@ -4,6 +4,18 @@ export function messagingSenderId(appId: string | undefined) {
   return appId?.split(':')[1] ?? '';
 }
 
+export function needsPushInvitation(activeDevice: boolean, dismissedThisSession: boolean) {
+  return !activeDevice && !dismissedThisSession;
+}
+
+export function requiresHomeScreen(isAppleMobile: boolean, standalone: boolean) {
+  return isAppleMobile && !standalone;
+}
+
+export function attentionCount(paiements: number, dossiers: number) {
+  return paiements + dossiers;
+}
+
 export function notificationLink(path: unknown, origin: string) {
   if (typeof path !== 'string' || !path.startsWith('/') || path.startsWith('//')) return `${origin}/espace`;
   const url = new URL(path, origin);

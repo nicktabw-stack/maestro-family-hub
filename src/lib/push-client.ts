@@ -48,9 +48,9 @@ export async function disablePush() {
   await deleteToken(await messagingClient());
 }
 
-export async function listenForPush(callback: (title: string, body: string) => void) {
+export async function listenForPush(callback: (title: string, body: string, path: string) => void) {
   if (!config.apiKey || !appId || !('Notification' in window) || Notification.permission !== 'granted') return () => {};
   const { isSupported, onMessage } = await import('firebase/messaging');
   if (!(await isSupported())) return () => {};
-  return onMessage(await messagingClient(), (message) => callback(message.notification?.title ?? 'MaîtreDom', message.notification?.body ?? ''));
+  return onMessage(await messagingClient(), (message) => callback(message.notification?.title ?? 'MaîtreDom', message.notification?.body ?? '', message.data?.['path'] ?? '/espace'));
 }

@@ -36,6 +36,20 @@
       "when": 1795139904846,
       "tag": "0004_push_devices",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795330003476,
+      "tag": "0005_notification_events_and_payment_alerts",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795330135809,
+      "tag": "0006_manual_course_request_dedup",
+      "breakpoints": true
     }
   ]
 }

@@ -9,6 +9,8 @@ import { ACTUALISATION_PAIEMENTS_MS } from "@/lib/paiement";
 import { confirmerReceptionPaiement } from "@/lib/paiement-actions";
 import { adminAttentionOptions } from '@/lib/admin-attention';
 import { Button } from '@/components/ui/button';
+import { COURSE_SAFE_FIELDS } from '@/lib/course-position';
+import { VerifyCoursePositionButton } from '@/components/course-position-admin';
 import { EcranAttenteAdmin, useGardeAdmin } from "@/components/garde-admin";
 import {
   StatutBadge,
@@ -52,18 +54,17 @@ function SyntheseAdmin() {
         supabase.from("paiements").select("*, familles(nom)").eq("mois", mois),
         supabase
           .from("cours")
-          .select("*, enfants(prenom)")
+          .select(`${COURSE_SAFE_FIELDS}, enfants(prenom)`)
           .gte("date_cours", debut)
           .lte("date_cours", fin)
           .order("date_cours"),
         supabase.from("maitres").select("id").eq("statut", "en_attente"),
         supabase
           .from("alertes")
-          .select("*")
+          .select("*, cours(confirme_famille)")
           .eq("lue", false)
           .neq('type', 'Paiement signalé')
-          .order("created_at", { ascending: false })
-          .limit(5),
+          .order("created_at", { ascending: false }),
       ]);
       return {
         familles: familles.data ?? [],
@@ -211,6 +212,11 @@ function SyntheseAdmin() {
               >
                 <p className="text-sm font-semibold">{a.type}</p>
                 <p className="text-sm text-muted-foreground">{a.message}</p>
+                {a.cours?.confirme_famille && <p className="mt-1 text-xs font-semibold">Confirmé par le parent</p>}
+                {a.cours_id && a.type === 'Position incohérente' && <>
+                  <Button asChild variant="link" size="sm"><Link to="/admin/cours">Voir le pointage</Link></Button>
+                  <VerifyCoursePositionButton coursId={a.cours_id} />
+                </>}
               </li>
             ))}
           </ul>

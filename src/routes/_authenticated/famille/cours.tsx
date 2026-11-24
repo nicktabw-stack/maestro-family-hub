@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { CheckCircle2, MapPinOff, PenLine } from "lucide-react";
+import { CheckCircle2, PenLine } from "lucide-react";
+import { COURSE_SAFE_FIELDS } from '@/lib/course-position';
 import { supabase } from "@/integrations/supabase/client";
 import { useSessionUser } from "@/hooks/use-auth";
 import { AppShell } from "@/components/app-shell";
@@ -46,7 +47,7 @@ function CoursFamille() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cours")
-        .select("*, enfants(prenom, nom)")
+        .select(`${COURSE_SAFE_FIELDS}, enfants(prenom, nom)`)
         .not("debut_reel", "is", null)
         .order("date_cours", { ascending: false })
         .limit(50);
@@ -102,11 +103,6 @@ function CoursFamille() {
                   ) : (
                     <StatutBadge ton="info">Pointage en temps réel</StatutBadge>
                   )}
-                  {c.position_incoherente ? (
-                    <StatutBadge ton="danger">
-                      <MapPinOff className="mr-1 h-3 w-3" /> Position incohérente
-                    </StatutBadge>
-                  ) : null}
                 </div>
 
                 {c.confirme_famille ? (

@@ -50,6 +50,13 @@
       "when": 1795330135809,
       "tag": "0006_manual_course_request_dedup",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795513282029,
+      "tag": "0007_private_course_position_checks",
+      "breakpoints": true
     }
   ]
 }

@@ -19,6 +19,7 @@ import { LIEN_PAIEMENT_WAVE, ACTUALISATION_PAIEMENTS_MS, montantPaiementConfirme
 import { AssistantPaiement } from "@/components/assistant-paiement";
 import { useServerFn } from '@tanstack/react-start';
 import { signalerPaiementEtNotifier } from '@/lib/notification-actions.functions';
+import { COURSE_SAFE_FIELDS } from '@/lib/course-position';
 
 export const Route = createFileRoute("/_authenticated/famille/")({
   head: () => ({ meta: [
@@ -88,7 +89,7 @@ function EspaceFamille() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cours")
-        .select("*, enfants(prenom)")
+        .select(`${COURSE_SAFE_FIELDS}, enfants(prenom)`)
         .order("date_cours", { ascending: true })
         .limit(10);
       if (error) throw error;

@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Clock, MapPinOff, PenLine } from "lucide-react";
+import { CheckCircle2, Clock, PenLine } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
 import { EtatVide } from "@/components/chargement";
 import { EcranAttenteAdmin, useGardeAdmin } from "@/components/garde-admin";
 import { StatutBadge, libelleCours } from "@/components/statut-badge";
 import { formatJourCourt } from "@/lib/format";
+import { COURSE_SAFE_FIELDS } from '@/lib/course-position';
+import { CoursePositionAdmin } from '@/components/course-position-admin';
 
 export const Route = createFileRoute("/_authenticated/admin/cours")({
   head: () => ({ meta: [
@@ -41,15 +43,17 @@ function HistoriqueCours() {
   const { data } = useQuery({
     queryKey: ["admin-historique-cours"],
     enabled: pret,
+    refetchInterval: 3000,
     queryFn: async () => {
       const [enfants, cours] = await Promise.all([
         supabase.from("enfants").select("id, prenom, nom, familles(nom)").order("prenom"),
         supabase
           .from("cours")
-          .select("*, enfants(prenom, nom)")
+          .select(`${COURSE_SAFE_FIELDS}, enfants(prenom, nom), cours_positions(*), alertes(verifie_at)`)
           .order("date_cours", { ascending: false })
           .limit(300),
       ]);
+      if (enfants.error || cours.error) throw new Error('Impossible de lire les cours.');
       return { enfants: enfants.data ?? [], cours: cours.data ?? [] };
     },
   });
@@ -122,13 +126,8 @@ function HistoriqueCours() {
                     ) : (
                       <StatutBadge ton="neutre">En attente de confirmation</StatutBadge>
                     )}
-                    {c.position_incoherente ? (
-                      <StatutBadge ton="danger">
-                        <MapPinOff className="mr-1 h-3 w-3" /> Position incohérente
-                        {c.distance_m ? ` (${Math.round(Number(c.distance_m))} m)` : ""}
-                      </StatutBadge>
-                    ) : null}
                   </div>
+                  <CoursePositionAdmin coursId={c.id} positions={c.cours_positions} alert={c.alertes[0] ?? null} confirmed={c.confirme_famille} />
                 </li>
               );
             })}

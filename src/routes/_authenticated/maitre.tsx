@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { MapPin, Play, Square, PencilLine } from "lucide-react";
+import { Play, Square, PencilLine } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useSessionUser } from "@/hooks/use-auth";
 import { AppShell } from "@/components/app-shell";
@@ -10,7 +10,9 @@ import { Chargement, EtatVide } from "@/components/chargement";
 import { StatutBadge, libelleCours, libelleMaitre, tonMaitre } from "@/components/statut-badge";
 import { formatJourCourt } from "@/lib/format";
 import { useServerFn } from '@tanstack/react-start';
-import { terminerCoursEtNotifier, saisirCoursEtNotifier } from '@/lib/notification-actions.functions';
+import { demarrerCoursAvecPosition, terminerCoursEtNotifier, saisirCoursEtNotifier } from '@/lib/notification-actions.functions';
+import { captureCoursePosition, COURSE_SAFE_FIELDS } from '@/lib/course-position';
+import { Button } from '@/components/ui/button';
 
 export const Route = createFileRoute("/_authenticated/maitre")({
   head: () => ({ meta: [
@@ -38,8 +40,6 @@ type CoursRow = {
   debut_reel: string | null;
   fin_reelle: string | null;
   saisie_manuelle: boolean;
-  position_incoherente: boolean;
-  distance_m: number | null;
   enfants?: { prenom: string; nom: string | null } | null;
 };
 
@@ -51,27 +51,20 @@ function duree(debut: string | null, fin: string | null) {
   return `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, "0")}`;
 }
 
-function positionActuelle(): Promise<{ lat: number | null; lng: number | null }> {
-  return new Promise((resolve) => {
-    if (typeof navigator === "undefined" || !navigator.geolocation) {
-      resolve({ lat: null, lng: null });
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
-      () => resolve({ lat: null, lng: null }),
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
-  });
-}
-
 function EspaceMaitre() {
   const { user } = useSessionUser();
   const { data: profil } = useProfile(user?.id);
   const queryClient = useQueryClient();
+  const demarrerServeur = useServerFn(demarrerCoursAvecPosition);
   const terminerServeur = useServerFn(terminerCoursEtNotifier);
   const manuelServeur = useServerFn(saisirCoursEtNotifier);
   const [messageCours, setMessageCours] = useState('');
+  const [rappelPosition, setRappelPosition] = useState<string | null>(null);
+  const capturer = async (enfantId: string) => {
+    const position = await captureCoursePosition();
+    setRappelPosition(position.reason ? enfantId : null);
+    return position;
+  };
   const manualRequest = useRef<string | null>(null);
   const [saisieEnfant, setSaisieEnfant] = useState<string | null>(null);
   const [saisie, setSaisie] = useState({
@@ -85,10 +78,11 @@ function EspaceMaitre() {
     queryKey: ["maitre", user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
+      if (!user) return null;
       const { data, error } = await supabase
         .from("maitres")
         .select("*")
-        .eq("user_id", user!.id)
+        .eq("user_id", user.id)
         .maybeSingle();
       if (error) throw error;
       return data;
@@ -99,10 +93,11 @@ function EspaceMaitre() {
     queryKey: ["affectations-maitre", maitre?.id],
     enabled: !!maitre?.id,
     queryFn: async () => {
+      if (!maitre) return [];
       const { data, error } = await supabase
         .from("affectations")
         .select("id, enfant_id, enfants(prenom, nom, niveau)")
-        .eq("maitre_id", maitre!.id)
+        .eq("maitre_id", maitre.id)
         .eq("actif", true);
       if (error) throw error;
       return data ?? [];
@@ -115,7 +110,7 @@ function EspaceMaitre() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cours")
-        .select("*, enfants(prenom, nom)")
+        .select(`${COURSE_SAFE_FIELDS}, enfants(prenom, nom)`)
         .order("date_cours", { ascending: false })
         .limit(50);
       if (error) throw error;
@@ -129,26 +124,21 @@ function EspaceMaitre() {
 
   const demarrer = useMutation({
     mutationFn: async (enfantId: string) => {
-      const { lat, lng } = await positionActuelle();
-      const { error } = await supabase.rpc("demarrer_cours", {
-        _enfant_id: enfantId,
-        _lat: lat as number,
-        _lng: lng as number,
-      });
-      if (error) throw error;
-      return lat === null;
+      const position = await capturer(enfantId);
+      return demarrerServeur({ data: { enfantId, position } });
     },
-    onSuccess: (sansPosition) => {
-      toast.success(
-        sansPosition ? "Cours démarré (position non disponible)" : "Cours démarré et position enregistrée",
-      );
+    onSuccess: () => {
+      setMessageCours('Cours démarré.');
       rafraichir();
     },
-    onError: () => toast.error("Impossible de démarrer le cours"),
+    onError: () => setMessageCours('Impossible de démarrer le cours. Réessayez.'),
   });
 
   const terminer = useMutation({
-    mutationFn: (coursId: string) => terminerServeur({ data: { coursId } }),
+    mutationFn: async (cours: CoursRow) => {
+      const position = await capturer(cours.enfant_id);
+      return terminerServeur({ data: { coursId: cours.id, position } });
+    },
     onSuccess: (result) => {
       setMessageCours(result.notificationFailed ? 'Cours terminé. La notification n’a pas pu être remise ; le cours est disponible à confirmer dans l’espace famille.' : 'Cours terminé. La famille peut le confirmer.');
       toast.success("Cours terminé");
@@ -158,9 +148,12 @@ function EspaceMaitre() {
   });
 
   const enregistrerManuel = useMutation({
-    mutationFn: (enfantId: string) => {
+    mutationFn: async (enfantId: string) => {
       manualRequest.current ??= crypto.randomUUID();
-      return manuelServeur({ data: { requestId: manualRequest.current, enfantId, date: saisie.date, debut: saisie.debut, fin: saisie.fin, matiere: saisie.matiere } });
+      const requestId = manualRequest.current;
+      const heures = { ...saisie };
+      const position = await capturer(enfantId);
+      return manuelServeur({ data: { requestId, enfantId, ...heures, position } });
     },
     onSuccess: (result) => {
       setMessageCours(result.notificationFailed ? 'Heures enregistrées. La notification n’a pas pu être remise ; le cours est disponible à confirmer dans l’espace famille.' : 'Heures enregistrées. La famille peut confirmer le cours.');
@@ -241,21 +234,22 @@ function EspaceMaitre() {
                   </div>
 
                   <div className="mt-3 grid grid-cols-2 gap-2">
-                    <button
-                      disabled={!!actif || demarrer.isPending}
+                    <Button
+                      disabled={!!actif || demarrer.isPending || terminer.isPending || enregistrerManuel.isPending}
                       onClick={() => demarrer.mutate(a.enfant_id)}
                       className="flex h-11 items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground disabled:opacity-50"
                     >
-                      <Play className="h-4 w-4" /> Démarrer
-                    </button>
-                    <button
-                      disabled={!actif || terminer.isPending}
-                      onClick={() => actif && terminer.mutate(actif.id)}
+                      <Play className="h-4 w-4" /> {demarrer.isPending && demarrer.variables === a.enfant_id ? 'Pointage…' : 'Démarrer'}
+                    </Button>
+                    <Button variant="outline"
+                      disabled={!actif || terminer.isPending || demarrer.isPending || enregistrerManuel.isPending}
+                      onClick={() => actif && terminer.mutate(actif)}
                       className="flex h-11 items-center justify-center gap-2 rounded-xl border border-border text-sm font-semibold disabled:opacity-50"
                     >
-                      <Square className="h-4 w-4" /> Terminer
-                    </button>
+                      <Square className="h-4 w-4" /> {terminer.isPending && terminer.variables?.enfant_id === a.enfant_id ? 'Pointage…' : 'Terminer'}
+                    </Button>
                   </div>
+                  {rappelPosition === a.enfant_id && <p role="status" className="mt-2 text-xs text-muted-foreground">Activez la localisation pour votre prochain pointage</p>}
 
                   <button
                     onClick={() => setSaisieEnfant(saisieEnfant === a.enfant_id ? null : a.enfant_id)}
@@ -267,6 +261,7 @@ function EspaceMaitre() {
                   {saisieEnfant === a.enfant_id ? (
                     <div className="mt-2 grid gap-2 rounded-xl border border-border p-3">
                       <input
+                        aria-label="Date du cours"
                         type="date"
                         className={champ}
                         value={saisie.date}
@@ -274,12 +269,14 @@ function EspaceMaitre() {
                       />
                       <div className="grid grid-cols-2 gap-2">
                         <input
+                          aria-label="Heure de début"
                           type="time"
                           className={champ}
                           value={saisie.debut}
                           onChange={(e) => setSaisie((v) => ({ ...v, debut: e.target.value }))}
                         />
                         <input
+                          aria-label="Heure de fin"
                           type="time"
                           className={champ}
                           value={saisie.fin}
@@ -292,13 +289,13 @@ function EspaceMaitre() {
                         value={saisie.matiere}
                         onChange={(e) => setSaisie((v) => ({ ...v, matiere: e.target.value }))}
                       />
-                      <button
-                        disabled={enregistrerManuel.isPending}
+                      <Button
+                        disabled={enregistrerManuel.isPending || demarrer.isPending || terminer.isPending}
                         onClick={() => enregistrerManuel.mutate(a.enfant_id)}
                         className="h-11 rounded-xl bg-primary text-sm font-semibold text-primary-foreground disabled:opacity-60"
                       >
-                        Enregistrer ces heures
-                      </button>
+                        {enregistrerManuel.isPending ? 'Pointage…' : 'Enregistrer ces heures'}
+                      </Button>
                     </div>
                   ) : null}
                 </li>
@@ -329,11 +326,6 @@ function EspaceMaitre() {
                     <StatutBadge ton={c.saisie_manuelle ? "alerte" : "succes"}>
                       {c.saisie_manuelle ? "Saisie manuelle" : libelleCours(c.statut)}
                     </StatutBadge>
-                    {c.position_incoherente ? (
-                      <span className="flex items-center gap-1 text-[11px] font-semibold text-destructive">
-                        <MapPin className="h-3 w-3" /> Position incohérente
-                      </span>
-                    ) : null}
                   </div>
                 </div>
               </li>

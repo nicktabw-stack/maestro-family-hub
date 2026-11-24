@@ -1,4 +1,8 @@
 # Corrections paiements
+- [ ] Compléter les captures GPS début, fin et saisie manuelle avec précision et niveaux.
+- [ ] Réserver les résultats de position à l’admin, y compris les accès aux données.
+- [ ] Garder une seule alerte rouge par cours jusqu’à vérification admin, indépendamment du parent.
+- [ ] Tester les seuils, la confidentialité et le parcours de pointage.
 - [x] Afficher l’invitation aux notifications à chaque connexion, avec report par session et installation iPhone.
 - [x] Envoyer côté serveur les notifications de fin de cours et de paiement signalé, sans doublons.
 - [x] Nettoyer les alertes traitées et synchroniser les listes et la pastille admin.

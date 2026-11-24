@@ -77,6 +77,7 @@ export type Database = {
       }
       alertes: {
         Row: {
+          cours_id: string | null
           created_at: string
           famille_id: string | null
           id: string
@@ -86,8 +87,11 @@ export type Database = {
           paiement_id: string | null
           severite: string
           type: string
+          verifie_at: string | null
+          verifie_par: string | null
         }
         Insert: {
+          cours_id?: string | null
           created_at?: string
           famille_id?: string | null
           id?: string
@@ -97,8 +101,11 @@ export type Database = {
           paiement_id?: string | null
           severite?: string
           type: string
+          verifie_at?: string | null
+          verifie_par?: string | null
         }
         Update: {
+          cours_id?: string | null
           created_at?: string
           famille_id?: string | null
           id?: string
@@ -108,8 +115,17 @@ export type Database = {
           paiement_id?: string | null
           severite?: string
           type?: string
+          verifie_at?: string | null
+          verifie_par?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "alertes_cours_id_fkey"
+            columns: ["cours_id"]
+            isOneToOne: false
+            referencedRelation: "cours"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "alertes_famille_id_fkey"
             columns: ["famille_id"]
@@ -280,6 +296,53 @@ export type Database = {
             columns: ["maitre_remplacant_id"]
             isOneToOne: false
             referencedRelation: "maitres"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cours_positions: {
+        Row: {
+          capture_at: string
+          cours_id: string
+          distance_m: number | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          niveau: string
+          phase: string
+          precision_m: number | null
+          raison: string | null
+        }
+        Insert: {
+          capture_at?: string
+          cours_id: string
+          distance_m?: number | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          niveau: string
+          phase: string
+          precision_m?: number | null
+          raison?: string | null
+        }
+        Update: {
+          capture_at?: string
+          cours_id?: string
+          distance_m?: number | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          niveau?: string
+          phase?: string
+          precision_m?: number | null
+          raison?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cours_positions_cours_id_fkey"
+            columns: ["cours_id"]
+            isOneToOne: false
+            referencedRelation: "cours"
             referencedColumns: ["id"]
           },
         ]
@@ -672,6 +735,10 @@ export type Database = {
         }
         Returns: string
       }
+      enregistrer_position_cours: {
+        Args: { _cours: string; _phase: string; _position: Json }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -681,6 +748,24 @@ export type Database = {
       }
       is_famille_owner: { Args: { _famille_id: string }; Returns: boolean }
       maitre_suit_enfant: { Args: { _enfant_id: string }; Returns: boolean }
+      niveau_position: {
+        Args: { _distance: number; _precision: number }
+        Returns: string
+      }
+      pointer_cours: {
+        Args: {
+          _action: string
+          _cours_id?: string
+          _date?: string
+          _debut?: string
+          _enfant_id?: string
+          _fin?: string
+          _matiere?: string
+          _position: Json
+          _request_id?: string
+        }
+        Returns: string
+      }
       saisir_cours_manuel: {
         Args: {
           _date: string
@@ -704,6 +789,10 @@ export type Database = {
       }
       signaler_paiement: { Args: never; Returns: string }
       terminer_cours: { Args: { _cours_id: string }; Returns: undefined }
+      verifier_position_cours: {
+        Args: { _cours_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "maitre" | "famille"

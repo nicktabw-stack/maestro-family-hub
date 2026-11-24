@@ -1,12 +1,22 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
+import { coursePositionSchema } from '@/lib/course-position';
+
+export const demarrerCoursAvecPosition = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ enfantId: z.string().uuid(), position: coursePositionSchema }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: id, error } = await context.supabase.rpc('pointer_cours', { _action: 'debut', _enfant_id: data.enfantId, _position: data.position });
+    if (error || !id) throw new Error('Impossible de démarrer le cours.');
+    return { id };
+  });
 
 export const terminerCoursEtNotifier = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ coursId: z.string().uuid() }).parse(input))
+  .inputValidator((input) => z.object({ coursId: z.string().uuid(), position: coursePositionSchema }).parse(input))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.rpc('terminer_cours', { _cours_id: data.coursId });
+    const { error } = await context.supabase.rpc('pointer_cours', { _action: 'fin', _cours_id: data.coursId, _position: data.position });
     if (error) throw new Error('Impossible de terminer ce cours.');
     const { dispatchNotification } = await import('./notification-events.server');
     try {
@@ -17,9 +27,9 @@ export const terminerCoursEtNotifier = createServerFn({ method: 'POST' })
 
 export const saisirCoursEtNotifier = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ requestId: z.string().uuid(), enfantId: z.string().uuid(), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), debut: z.string().regex(/^\d{2}:\d{2}$/), fin: z.string().regex(/^\d{2}:\d{2}$/), matiere: z.string().max(200) }).parse(input))
+  .inputValidator((input) => z.object({ requestId: z.string().uuid(), enfantId: z.string().uuid(), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), debut: z.string().regex(/^\d{2}:\d{2}$/), fin: z.string().regex(/^\d{2}:\d{2}$/), matiere: z.string().max(200), position: coursePositionSchema }).parse(input))
   .handler(async ({ data, context }) => {
-    const { data: id, error } = await context.supabase.rpc('saisir_cours_manuel_unique', { _request_id: data.requestId, _enfant_id: data.enfantId, _date: data.date, _debut: data.debut, _fin: data.fin, _matiere: data.matiere.trim() });
+    const { data: id, error } = await context.supabase.rpc('pointer_cours', { _action: 'manuel', _position: data.position, _request_id: data.requestId, _enfant_id: data.enfantId, _date: data.date, _debut: data.debut, _fin: data.fin, _matiere: data.matiere.trim() });
     if (error || !id) throw new Error('Impossible d’enregistrer les heures.');
     const { dispatchNotification } = await import('./notification-events.server');
     try {

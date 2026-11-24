@@ -19,3 +19,5 @@
 - Manual course submissions carry a request UUID persisted in manual_course_requests; repeated submissions return the same course instead of creating duplicate history or notifications.
 - Admin payment alerts and navigation counts share admin-attention query data; stored payment alerts are closed by a payment-state trigger so confirmations from any screen stay consistent.
 - Notification invitation dismissal is keyed to the authenticated sign-in timestamp in sessionStorage, so deferral lasts only for that login session.
+- Store course location checks in an admin-only RLS table; grant only safe course columns to authenticated readers so non-admin queries cannot expose GPS or assessment data.
+- Capture each course phase through one authenticated atomic database action, reusing existing course and notification logic; course-linked unique alerts stay open until explicit admin verification.

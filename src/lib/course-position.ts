@@ -27,7 +27,7 @@ export function needsPositionReview(hasRedAlert: boolean, verifiedAt: string | n
 
 export async function captureCoursePosition(): Promise<CoursePosition> {
   try {
-    const { coords } = await getCurrentPosition(10000);
+    const { coords } = await getCurrentPosition(10000, 0);
     return coursePositionSchema.parse({ lat: coords.latitude, lng: coords.longitude, accuracy: coords.accuracy, reason: null });
   } catch (error) {
     return { lat: null, lng: null, accuracy: null, reason: error instanceof GeolocationError ? error.reason : 'unavailable' };

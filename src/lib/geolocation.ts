@@ -31,7 +31,7 @@ export function geolocationErrorMessage(error: unknown): string {
   }
 }
 
-export function getCurrentPosition(timeoutMs = 15000): Promise<GeolocationPosition> {
+export function getCurrentPosition(timeoutMs = 15000, maximumAgeMs = 30000): Promise<GeolocationPosition> {
   return new Promise((resolve, reject) => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
       reject(new GeolocationError("unsupported"));
@@ -64,7 +64,7 @@ export function getCurrentPosition(timeoutMs = 15000): Promise<GeolocationPositi
       {
         enableHighAccuracy: true,
         timeout: timeoutMs,
-        maximumAge: 30000,
+        maximumAge: maximumAgeMs,
       },
     );
   });
